@@ -4,28 +4,23 @@
 #include <unistd.h>
 
 #include "debug.h"
+#include "mat.h"
 #include "misc.h"
  
  
-void GLAPIENTRY
-MessageCallback( GLenum source,
-                 GLenum type,
-                 GLuint id,
-                 GLenum severity,
-                 GLsizei length,
-                 const GLchar* message,
-                 const void* userParam )
+void GLAPIENTRY MessageCallback
+(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * message, const void * userParam)
 {
-  fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-           ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
-            type, severity, message );
+	fprintf (stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ), type, severity, message);
 }
+
 
 struct Vertex
 {
 	GLfloat pos[4];
 	GLfloat col[4];
 };
+
 
 GLuint Mesh_Setup(GLuint shader_prog, struct Vertex *verts, GLuint num_verts)
 {
@@ -76,7 +71,10 @@ int main(int argc, char *argv[])
 	SDL_Window * window;
 	SDL_GLContext context;
 	GLuint program;
-
+	GLuint uniform_mvp;
+	float mvp [4*4];
+	IDENTITY_M (4, 4, mvp);
+	
 	window = SDL_CreateWindow ("OpenGL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_OPENGL);
 	ASSERT_F (window != NULL, "SDL_CreateWindow: %s", SDL_GetError());
 	
@@ -99,7 +97,8 @@ int main(int argc, char *argv[])
 		{0, GL_FRAGMENT_SHADER, "shader.glfs"}
 	};
 	program = app_create_program (shaders, 2);
-
+	uniform_mvp = glGetUniformLocation (program, "mvp");
+	ASSERT_F (uniform_mvp >= 0, "glGetUniformLocation no uniform found.");
 
 	
 	struct Vertex tri_data [3] = 
@@ -123,7 +122,8 @@ int main(int argc, char *argv[])
 	GLuint sqr_vao = Mesh_Setup (program, sqr_data, 6);
 	GLuint num_verts = 0;
 	GLfloat scr_col[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-	
+	const Uint8 * keyboard = SDL_GetKeyboardState (NULL);
+
 	while (1)
 	{
 		
@@ -154,20 +154,30 @@ int main(int argc, char *argv[])
 					break;
 					
 					case SDLK_z:
-					glBindVertexArray(tri_vao);
+					glBindVertexArray (tri_vao);
 					num_verts = 3;
 					break;
 					
 					case SDLK_x:
-					glBindVertexArray(sqr_vao);
+					glBindVertexArray (sqr_vao);
 					num_verts = 6;
+					break;
+					
+					case SDLK_r:
+					CLR_V (4*4, mvp);
 					break;
 				}
 				break;
 			}
 		}
 		
+		TRANSLATE_X(mvp) += keyboard [SDL_SCANCODE_D] * -0.01f;
+		TRANSLATE_X(mvp) += keyboard [SDL_SCANCODE_A] * 0.01f;
+		TRANSLATE_Y(mvp) += keyboard [SDL_SCANCODE_SPACE] * -0.01f;
+		TRANSLATE_Y(mvp) += keyboard [SDL_SCANCODE_LCTRL] * 0.01f;
+		
 		glUseProgram (program);
+		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, mvp);
 		glClearBufferfv (GL_COLOR, 0, scr_col);
 		glDrawArrays (GL_TRIANGLES, 0, num_verts);
 		//printf ("glGetError %i\n", glGetError ());
