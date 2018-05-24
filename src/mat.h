@@ -1,5 +1,5 @@
 #pragma once
-
+#include <math.h>
 
 // Set vector scalar
 // (v := {x | x = s})
@@ -143,6 +143,59 @@
 }
 
 
-#define TRANSLATE_X(m) (m) [12]
-#define TRANSLATE_Y(m) (m) [13]
-#define TRANSLATE_Z(m) (m) [14]
+#define TX_M4X4 12
+#define TY_M4X4 13
+#define TZ_M4X4 14
+
+
+
+#define PRINT_M4X4(m)                                                   \
+{                                                                       \
+	for (size_t _i = 0; _i < 4; _i++)                                     \
+	{                                                                     \
+		for (size_t _j = 0; _j < 4; _j++)                                   \
+			printf ("%2.2f ", m [_j*4 + _i]);                                 \
+		printf ("\n");                                                      \
+	}                                                                     \
+}
+
+
+#define MUL_M4X4(m, a, b)                                               \
+{                                                                       \
+	for (size_t _c = 0; _c < 4; _c = _c + 1)                              \
+	for (size_t _r = 0; _r < 4; _r = _r + 1)                              \
+	{                                                                     \
+		(m)[_c*4 + _r] = 0.0f;                                              \
+		for(size_t _k = 0; _k < 4; _k = _k + 1)                             \
+			(m)[_c*4 + _r] += (a)[_k*4 + _r] * (b)[_c*4 + _k];                \
+	}                                                                     \
+}
+
+#define ROTX_M4X4(m, a)                                                 \
+(m)[5] = cos (a);                                                       \
+(m)[6] = sin (a);                                                       \
+(m)[9] = -sin (a);                                                      \
+(m)[10] = cos (a);                                                      \
+
+#define ROTY_M4X4(m, a)                                                 \
+(m)[0] = cos (a);                                                       \
+(m)[2] = -sin (a);                                                      \
+(m)[8] = sin (a);                                                       \
+(m)[10] = cos (a);                                                      \
+
+#define ROTZ_M4X4(m, a)                                                 \
+(m)[0] = cos (a);                                                       \
+(m)[1] = sin (a);                                                       \
+(m)[4] = -sin (a);                                                      \
+(m)[5] = cos (a);                                                       \
+
+
+#define FRUSTUM_M4X4(m, r, t, n, f)                                     \
+(m)[0] = (n)/(r);                                                       \
+(m)[5] = (n)/(r);                                                       \
+(m)[10] = -((f)+(n))/((f)-(n));                                         \
+(m)[11] = -1;                                                           \
+(m)[14] = (-2*(f)*(n))/((f)-(n));                                       \
+
+#define PERSPECTIVE_M4X4(m, fov, aspect, n, f)                          \
+FRUSTUM_M4X4((m),(aspect)*tan((fov) * 0.5 * M_PI / 180), tan((fov) * 0.5 * M_PI / 180) * n, (n), (f))

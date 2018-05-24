@@ -73,7 +73,17 @@ int main(int argc, char *argv[])
 	GLuint program;
 	GLuint uniform_mvp;
 	float mvp [4*4];
+	float mrx [4*4];
+	float mp [4*4];
+	float ax = 0.0f;
+	float mt [4*4];
+	float temp [4*4];
 	IDENTITY_M (4, 4, mvp);
+	IDENTITY_M (4, 4, mrx);
+	IDENTITY_M (4, 4, mt);
+	CLR_V (4*4, mp);
+	PERSPECTIVE_M4X4 (mp, 90.0f, 1024.0f/768.0f, 0.1f, 100.0f);
+	PRINT_M4X4 (mp);
 	
 	window = SDL_CreateWindow ("OpenGL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_OPENGL);
 	ASSERT_F (window != NULL, "SDL_CreateWindow: %s", SDL_GetError());
@@ -164,17 +174,41 @@ int main(int argc, char *argv[])
 					break;
 					
 					case SDLK_r:
-					CLR_V (4*4, mvp);
+					//CLR_V (4*4, mvp);
+					case SDLK_a:
+					case SDLK_d:
+					case SDLK_w:
+					case SDLK_s:
+
+					case SDLK_SPACE:
+					case SDLK_LCTRL:
+					case SDLK_LEFT:
+					case SDLK_RIGHT:
+					case SDLK_UP:
+					case SDLK_DOWN:
+					PRINT_M4X4 (mvp);
+					printf ("\n");
 					break;
+					
+					
+					
 				}
 				break;
 			}
 		}
 		
-		TRANSLATE_X(mvp) += keyboard [SDL_SCANCODE_D] * -0.01f;
-		TRANSLATE_X(mvp) += keyboard [SDL_SCANCODE_A] * 0.01f;
-		TRANSLATE_Y(mvp) += keyboard [SDL_SCANCODE_SPACE] * -0.01f;
-		TRANSLATE_Y(mvp) += keyboard [SDL_SCANCODE_LCTRL] * 0.01f;
+		mt [TX_M4X4] += keyboard [SDL_SCANCODE_D] * -0.01f;
+		mt [TX_M4X4] += keyboard [SDL_SCANCODE_A] * 0.01f;
+		mt [TZ_M4X4] += keyboard [SDL_SCANCODE_W] * 0.01f;
+		mt [TZ_M4X4] += keyboard [SDL_SCANCODE_S] * -0.01f;
+		mt [TY_M4X4] += keyboard [SDL_SCANCODE_SPACE] * -0.01f;
+		mt [TY_M4X4] += keyboard [SDL_SCANCODE_LCTRL] * 0.01f;
+		ax += keyboard [SDL_SCANCODE_LEFT]*0.1f;
+		ax += keyboard [SDL_SCANCODE_RIGHT]*-0.1f;
+		ROTY_M4X4 (mrx, ax);
+		//MUL_M4X4 (mvp, mrx, mt);
+		MUL_M4X4 (temp, mp, mt);
+		MUL_M4X4 (mvp, mrx, temp);
 		
 		glUseProgram (program);
 		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, mvp);
