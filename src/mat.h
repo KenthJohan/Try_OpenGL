@@ -199,3 +199,15 @@
 
 #define PERSPECTIVE_M4X4(m, fov, aspect, n, f)                          \
 FRUSTUM_M4X4((m),(aspect)*tan((fov) * 0.5 * M_PI / 180), tan((fov) * 0.5 * M_PI / 180) * n, (n), (f))
+
+
+
+#define SET_V4(v,x,y,z,w)\
+{\
+(v)[0] = x;\
+(v)[1] = y;\
+(v)[2] = z;\
+(v)[3] = w;\
+}\
+
+

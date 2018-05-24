@@ -47,8 +47,46 @@ GLuint Mesh_Setup(GLuint shader_prog, struct Vertex *verts, GLuint num_verts)
 	return vao;
 }
 
- 
- 
+
+void gen_grid (struct Vertex * verts, size_t count, float sizex, float sizey)
+{
+	size_t j = 0;
+	for (size_t i = 0; i < count; i = i + 1)
+	{
+			float xx;
+			float yy;
+			
+			if (j == count){return;}
+			xx = 0.0f + (float)i * sizex;
+			yy = 0.0f;
+			SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
+			SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+			j = j + 1;
+			
+			if (j == count){return;}
+			xx = 0.0f + (float)i * sizex;
+			yy = (float)count * sizey * 0.25;
+			SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
+			SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+			j = j + 1;
+			
+			if (j == count){return;}
+			xx = 0.0f;
+			yy = 0.0f + (float)i * sizey;
+			SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
+			SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+			j = j + 1;
+			
+			if (j == count){return;}
+			xx = (float)count * sizex * 0.25;
+			yy = 0.0f + (float)i * sizey;
+			SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
+			SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+			j = j + 1;
+	}
+}
+
+
 int main(int argc, char *argv[])
 {
 	fprintf (stderr, "main\n");
@@ -82,7 +120,7 @@ int main(int argc, char *argv[])
 	IDENTITY_M (4, 4, mrx);
 	IDENTITY_M (4, 4, mt);
 	CLR_V (4*4, mp);
-	PERSPECTIVE_M4X4 (mp, 90.0f, 1024.0f/768.0f, 0.1f, 100.0f);
+	PERSPECTIVE_M4X4 (mp, 45.0f, 1024.0f/768.0f, 0.1f, 100.0f);
 	PRINT_M4X4 (mp);
 	
 	window = SDL_CreateWindow ("OpenGL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_OPENGL);
@@ -127,9 +165,16 @@ int main(int argc, char *argv[])
 		[4].pos = { -0.5f,  0.5f, 0.0f, 1.0f }, [4].col = { 0.0f, 1.0f, 0.0f, 1.0f },
 		[5].pos = { -0.5f, -0.5f, 0.0f, 1.0f }, [5].col = { 1.0f, 0.0f, 0.0f, 1.0f }
 	};
-
+	
+	struct Vertex grid_data [400] = {0};
+	gen_grid (grid_data + 000, 100, 0.1f, 0.1f);
+	gen_grid (grid_data + 100, 100, 0.1f, -0.1f);
+	gen_grid (grid_data + 200, 100, -0.1f, 0.1f);
+	gen_grid (grid_data + 300, 100, -0.1f, -0.1f);
+	
 	GLuint tri_vao = Mesh_Setup (program, tri_data, 3);
 	GLuint sqr_vao = Mesh_Setup (program, sqr_data, 6);
+	GLuint grid_vao = Mesh_Setup (program, grid_data, 400);
 	GLuint num_verts = 0;
 	GLfloat scr_col[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	const Uint8 * keyboard = SDL_GetKeyboardState (NULL);
@@ -213,7 +258,13 @@ int main(int argc, char *argv[])
 		glUseProgram (program);
 		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, mvp);
 		glClearBufferfv (GL_COLOR, 0, scr_col);
-		glDrawArrays (GL_TRIANGLES, 0, num_verts);
+		
+		glBindVertexArray (tri_vao);
+		glDrawArrays (GL_TRIANGLES, 0, 3);
+		
+		glBindVertexArray (grid_vao);
+		glDrawArrays (GL_LINES, 0, 400);
+		
 		//printf ("glGetError %i\n", glGetError ());
 		fflush (stdout);
 		SDL_Delay (10);
