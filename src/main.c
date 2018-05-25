@@ -97,21 +97,38 @@ int main(int argc, char *argv[])
 
 	struct Vertex sqr_data [6] = 
 	{
-		[0].pos = { -0.5f, -0.5f, 0.0f, 1.0f }, [0].col = { 1.0f, 0.0f, 0.0f, 1.0f },
-		[1].pos = {  0.5f, -0.5f, 0.0f, 1.0f }, [1].col = { 0.0f, 1.0f, 0.0f, 1.0f },
-		[2].pos = {  0.5f,  0.5f, 0.0f, 1.0f }, [2].col = { 0.0f, 0.0f, 1.0f, 1.0f },
-		[3].pos = {  0.5f,  0.5f, 0.0f, 1.0f }, [3].col = { 0.0f, 0.0f, 1.0f, 1.0f },
-		[4].pos = { -0.5f,  0.5f, 0.0f, 1.0f }, [4].col = { 0.0f, 1.0f, 0.0f, 1.0f },
-		[5].pos = { -0.5f, -0.5f, 0.0f, 1.0f }, [5].col = { 1.0f, 0.0f, 0.0f, 1.0f }
+		[0].pos = { -0.5f, -0.5f, -1.0f, 1.0f }, [0].col = { 1.0f, 0.0f, 0.0f, 1.0f },
+		[1].pos = {  0.5f, -0.5f, -1.0f, 1.0f }, [1].col = { 0.0f, 1.0f, 0.0f, 1.0f },
+		[2].pos = {  0.5f,  0.5f, -1.0f, 1.0f }, [2].col = { 0.0f, 0.0f, 1.0f, 1.0f },
+		[3].pos = {  0.5f,  0.5f, -1.0f, 1.0f }, [3].col = { 0.0f, 0.0f, 1.0f, 1.0f },
+		[4].pos = { -0.5f,  0.5f, -1.0f, 1.0f }, [4].col = { 0.0f, 1.0f, 0.0f, 1.0f },
+		[5].pos = { -0.5f, -0.5f, -1.0f, 1.0f }, [5].col = { 1.0f, 0.0f, 0.0f, 1.0f }
 	};
 	
 	#define GRID_COUNT 84
 	struct Vertex grid_data [GRID_COUNT] = {0};
 	gen_grid (grid_data, GRID_COUNT, -10.0f, 10.0f, -10.0f, 10.0f, 1.0f);
 	
-	GLuint tri_vao = gpu_load_verts (program, tri_data, 3);
-	GLuint sqr_vao = gpu_load_verts (program, sqr_data, 6);
-	GLuint grid_vao = gpu_load_verts (program, grid_data, GRID_COUNT);
+	struct Mesh triangle;
+	struct Mesh square;
+	struct Mesh grid;
+	
+	triangle.mode = GL_TRIANGLES;
+	triangle.vert_count = 3;
+	triangle.vert_data = tri_data;
+	triangle.vao = gpu_load_verts (program, triangle.vert_data, triangle.vert_count);
+	
+	square.mode = GL_TRIANGLES;
+	square.vert_count = 6;
+	square.vert_data = sqr_data;
+	square.vao = gpu_load_verts (program, square.vert_data, square.vert_count);
+	
+	grid.mode = GL_LINES;
+	grid.vert_count = GRID_COUNT;
+	grid.vert_data = grid_data;
+	grid.vao = gpu_load_verts (program, grid.vert_data, GRID_COUNT);
+	
+	
 	GLuint num_verts = 0;
 	GLfloat scr_col[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	const Uint8 * keyboard = SDL_GetKeyboardState (NULL);
@@ -143,16 +160,6 @@ int main(int argc, char *argv[])
 					//Maybe SDL_PushEvent should be used for error handling?
 					event.type = SDL_QUIT;
 					SDL_PushEvent (&event);
-					break;
-					
-					case SDLK_z:
-					glBindVertexArray (tri_vao);
-					num_verts = 3;
-					break;
-					
-					case SDLK_x:
-					glBindVertexArray (sqr_vao);
-					num_verts = 6;
 					break;
 					
 					case SDLK_r:
@@ -196,11 +203,9 @@ int main(int argc, char *argv[])
 		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, cam.mvp);
 		glClearBufferfv (GL_COLOR, 0, scr_col);
 		
-		glBindVertexArray (tri_vao);
-		glDrawArrays (GL_TRIANGLES, 0, 3);
-		
-		glBindVertexArray (grid_vao);
-		glDrawArrays (GL_LINES, 0, GRID_COUNT);
+		mesh_draw (&triangle);
+		mesh_draw (&square);
+		mesh_draw (&grid);
 		
 		//printf ("glGetError %i\n", glGetError ());
 		fflush (stdout);

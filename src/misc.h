@@ -168,4 +168,18 @@ void app_make_perspective (SDL_Window * window, float m [4*4])
 }
 
 
+struct Mesh
+{
+	GLenum mode;
+	GLuint vao;
+	struct Vertex * vert_data;
+	size_t vert_count;
+};
 
+
+
+void mesh_draw (struct Mesh * mesh)
+{
+	glBindVertexArray (mesh->vao);
+	glDrawArrays (mesh->mode, 0, mesh->vert_count);
+}
