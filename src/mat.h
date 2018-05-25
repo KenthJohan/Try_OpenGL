@@ -160,7 +160,7 @@
 }
 
 
-#define MUL_M4X4(m, a, b)                                               \
+#define MUL_M4(m, a, b)                                                 \
 {                                                                       \
 	for (size_t _c = 0; _c < 4; _c = _c + 1)                              \
 	for (size_t _r = 0; _r < 4; _r = _r + 1)                              \
@@ -218,6 +218,12 @@ void perspective_m4x4 (float m [4*4], float fov, float aspect, float near, float
 }
 
 
+void mul_m4 (float m [4*4], float a [4*4], float b [4*4])
+{
+	float t [4*4];
+	MUL_M4 (t, a, b);
+	memcpy (m, t, sizeof (t));
+}
 
 
 

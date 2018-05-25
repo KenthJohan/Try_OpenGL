@@ -15,6 +15,19 @@ void GLAPIENTRY MessageCallback
 }
 
 
+struct Camera
+{
+	float mvp [4*4];
+	float mt [4*4];
+	float mp [4*4];
+	float mrx [4*4];
+	float mry [4*4];
+	float ax;
+	float ay;
+	float az;
+};
+
+
 
 
 
@@ -38,25 +51,19 @@ int main(int argc, char *argv[])
 	SDL_GLContext context;
 	GLuint program;
 	GLuint uniform_mvp;
-	float mvp [4*4];
-	float mrx [4*4];
-	float mry [4*4];
-	float mrxyz [4*4];
-	float mp [4*4];
-	float ax = 0.0f;
-	float ay = 0.0f;
-	float mt [4*4];
-	float temp [4*4];
-	IDENTITY_M (4, 4, mvp);
-	IDENTITY_M (4, 4, mrx);
-	IDENTITY_M (4, 4, mry);
-	IDENTITY_M (4, 4, mt);
-	
+	struct Camera cam;
 	
 	window = SDL_CreateWindow ("OpenGL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_OPENGL);
 	ASSERT_F (window != NULL, "SDL_CreateWindow: %s", SDL_GetError());
 	
-	app_make_perspective (window, mp);
+	IDENTITY_M (4, 4, cam.mvp);
+	IDENTITY_M (4, 4, cam.mrx);
+	IDENTITY_M (4, 4, cam.mry);
+	IDENTITY_M (4, 4, cam.mt);
+	app_make_perspective (window, cam.mp);
+	cam.ax = 0.0f;
+	cam.ay = 0.0f;
+	cam.az = 0.0f;
 	
 	context = SDL_GL_CreateContext (window);
 	ASSERT_F (context != NULL, "SDL_GL_CreateContext: %s", SDL_GetError());
@@ -161,7 +168,7 @@ int main(int argc, char *argv[])
 					case SDLK_RIGHT:
 					case SDLK_UP:
 					case SDLK_DOWN:
-					PRINT_M4X4 (mvp);
+					PRINT_M4X4 (cam.mvp);
 					printf ("\n");
 					break;
 				}
@@ -169,24 +176,24 @@ int main(int argc, char *argv[])
 			}
 		}
 		
-		mt [TX_M4X4] += keyboard [SDL_SCANCODE_D] * -0.01f;
-		mt [TX_M4X4] += keyboard [SDL_SCANCODE_A] * 0.01f;
-		mt [TZ_M4X4] += keyboard [SDL_SCANCODE_W] * 0.01f;
-		mt [TZ_M4X4] += keyboard [SDL_SCANCODE_S] * -0.01f;
-		mt [TY_M4X4] += keyboard [SDL_SCANCODE_SPACE] * -0.01f;
-		mt [TY_M4X4] += keyboard [SDL_SCANCODE_LCTRL] * 0.01f;
-		ax += keyboard [SDL_SCANCODE_UP]*0.01f;
-		ax += keyboard [SDL_SCANCODE_DOWN]*-0.01f;
-		ay += keyboard [SDL_SCANCODE_LEFT]*0.01f;
-		ay += keyboard [SDL_SCANCODE_RIGHT]*-0.01f;
-		ROTX_M4X4 (mrx, ax);
-		ROTY_M4X4 (mry, ay);
-		MUL_M4X4 (mrxyz, mrx, mry);
-		MUL_M4X4 (temp, mp, mt);
-		MUL_M4X4 (mvp, temp, mrxyz);
+		cam.mt [TX_M4X4] += keyboard [SDL_SCANCODE_D] * -0.01f;
+		cam.mt [TX_M4X4] += keyboard [SDL_SCANCODE_A] * 0.01f;
+		cam.mt [TZ_M4X4] += keyboard [SDL_SCANCODE_W] * 0.01f;
+		cam.mt [TZ_M4X4] += keyboard [SDL_SCANCODE_S] * -0.01f;
+		cam.mt [TY_M4X4] += keyboard [SDL_SCANCODE_SPACE] * -0.01f;
+		cam.mt [TY_M4X4] += keyboard [SDL_SCANCODE_LCTRL] * 0.01f;
+		cam.ax += keyboard [SDL_SCANCODE_UP]*0.01f;
+		cam.ax += keyboard [SDL_SCANCODE_DOWN]*-0.01f;
+		cam.ay += keyboard [SDL_SCANCODE_LEFT]*0.01f;
+		cam.ay += keyboard [SDL_SCANCODE_RIGHT]*-0.01f;
+		ROTX_M4X4 (cam.mrx, cam.ax);
+		ROTY_M4X4 (cam.mry, cam.ay);
+		mul_m4 (cam.mvp, cam.mrx, cam.mry);
+		mul_m4 (cam.mvp, cam.mt, cam.mvp);
+		mul_m4 (cam.mvp, cam.mp, cam.mvp);
 		
 		glUseProgram (program);
-		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, mvp);
+		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, cam.mvp);
 		glClearBufferfv (GL_COLOR, 0, scr_col);
 		
 		glBindVertexArray (tri_vao);
