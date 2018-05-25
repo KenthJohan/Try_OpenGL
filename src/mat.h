@@ -190,18 +190,6 @@
 (m)[5] = cos (a);                                                       \
 
 
-#define FRUSTUM_M4X4(m, r, t, n, f)                                     \
-(m)[0] = (n)/(r);                                                       \
-(m)[5] = (n)/(r);                                                       \
-(m)[10] = -((f)+(n))/((f)-(n));                                         \
-(m)[11] = -1;                                                           \
-(m)[14] = (-2*(f)*(n))/((f)-(n));                                       \
-
-#define PERSPECTIVE_M4X4(m, fov, aspect, n, f)                          \
-FRUSTUM_M4X4((m),(aspect)*tan((fov) * 0.5 * M_PI / 180), tan((fov) * 0.5 * M_PI / 180) * n, (n), (f))
-
-
-
 #define SET_V4(v,x,y,z,w)\
 {\
 (v)[0] = x;\
@@ -209,5 +197,28 @@ FRUSTUM_M4X4((m),(aspect)*tan((fov) * 0.5 * M_PI / 180), tan((fov) * 0.5 * M_PI 
 (v)[2] = z;\
 (v)[3] = w;\
 }\
+
+
+#define FRUSTUM_M4X4(m, l, r, b, t, n, f)                               \
+(m)[0] = (2*(n))/((r)-(l));                                             \
+(m)[5] = (2*(n))/((t)-(b));                                             \
+(m)[8] = ((r)+(l))/((r)-(l));                                           \
+(m)[9] = ((t)+(b))/((t)-(b));                                           \
+(m)[10] = (-(f)-(n))/((f)-(n));                                         \
+(m)[11] = -1;                                                           \
+(m)[14] = (-2*(f)*(n))/((f)-(n));                                       \
+
+
+void perspective_m4x4 (float m [4*4], float fov, float aspect, float near, float far)
+{
+	float tangent = tan ((M_PI/180.0f) * (fov / 2.0f));
+	float height = near * tangent;
+	float width = height * aspect;
+	FRUSTUM_M4X4 (m, -width, width, -height, height, near, far);
+}
+
+
+
+
 
 

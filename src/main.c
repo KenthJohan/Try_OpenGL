@@ -119,12 +119,19 @@ int main(int argc, char *argv[])
 	IDENTITY_M (4, 4, mvp);
 	IDENTITY_M (4, 4, mrx);
 	IDENTITY_M (4, 4, mt);
-	CLR_V (4*4, mp);
-	PERSPECTIVE_M4X4 (mp, 45.0f, 1024.0f/768.0f, 0.1f, 100.0f);
-	PRINT_M4X4 (mp);
+	
 	
 	window = SDL_CreateWindow ("OpenGL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_OPENGL);
 	ASSERT_F (window != NULL, "SDL_CreateWindow: %s", SDL_GetError());
+	
+	{
+		int w;
+		int h;
+		SDL_GetWindowSize (window, &w, &h);
+		CLR_V (4*4, mp);
+		perspective_m4x4 (mp, 45.0f, (float)w/(float)h, 0.1f, 100.0f);
+		PRINT_M4X4 (mp);
+	}
 	
 	context = SDL_GL_CreateContext (window);
 	ASSERT_F (context != NULL, "SDL_GL_CreateContext: %s", SDL_GetError());
@@ -253,7 +260,7 @@ int main(int argc, char *argv[])
 		ROTY_M4X4 (mrx, ax);
 		//MUL_M4X4 (mvp, mrx, mt);
 		MUL_M4X4 (temp, mp, mt);
-		MUL_M4X4 (mvp, mrx, temp);
+		MUL_M4X4 (mvp, temp, mrx);
 		
 		glUseProgram (program);
 		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, mvp);
