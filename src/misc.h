@@ -1,6 +1,6 @@
 #pragma once
 #include <GL/glew.h>
-
+#include <SDL2/SDL.h>
 
 struct app_shader
 {
@@ -77,4 +77,87 @@ GLuint app_create_program (struct app_shader * shaders, size_t count)
 		shaders [i].handle = 0;
 	}
 	return program;
+}
+
+
+struct Vertex
+{
+	GLfloat pos [4];
+	GLfloat col [4];
+};
+
+
+GLuint gpu_load_verts (GLuint program, struct Vertex * verts, GLuint count)
+{
+	GLuint vao;
+	glCreateVertexArrays (1, &vao);
+
+	GLuint pos_attrib_loc = glGetAttribLocation (program, "pos");
+	GLuint col_attrib_loc = glGetAttribLocation (program, "col");
+
+	glVertexArrayAttribFormat (vao, pos_attrib_loc, 4, GL_FLOAT, GL_FALSE, (GLuint)offsetof (struct Vertex, pos));
+	glVertexArrayAttribFormat (vao, col_attrib_loc, 4, GL_FLOAT, GL_FALSE, (GLuint)offsetof (struct Vertex, col));
+
+	glVertexArrayAttribBinding (vao, pos_attrib_loc, 0);
+	glVertexArrayAttribBinding (vao, col_attrib_loc, 0);
+
+	glEnableVertexArrayAttrib (vao, pos_attrib_loc);
+	glEnableVertexArrayAttrib (vao, col_attrib_loc);
+
+	GLuint vbo;
+	glCreateBuffers (1, &vbo);
+	glNamedBufferStorage (vbo, sizeof (struct Vertex) * count, verts, 0);
+
+	glVertexArrayVertexBuffer (vao, 0, vbo, 0, sizeof (struct Vertex));
+	return vao;
+}
+
+
+void gen_grid (struct Vertex * verts, size_t count, float sizex, float sizey)
+{
+	size_t j = 0;
+	for (size_t i = 0; i < count; i = i + 1)
+	{
+		float xx;
+		float yy;
+		
+		if (j == count){return;}
+		xx = 0.0f + (float)i * sizex;
+		yy = 0.0f;
+		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
+		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+		j = j + 1;
+		
+		if (j == count){return;}
+		xx = 0.0f + (float)i * sizex;
+		yy = (float)count * sizey * 0.25;
+		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
+		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+		j = j + 1;
+		
+		if (j == count){return;}
+		xx = 0.0f;
+		yy = 0.0f + (float)i * sizey;
+		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
+		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+		j = j + 1;
+		
+		if (j == count){return;}
+		xx = (float)count * sizex * 0.25;
+		yy = 0.0f + (float)i * sizey;
+		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
+		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+		j = j + 1;
+	}
+}
+
+
+void app_make_perspective (SDL_Window * window, float m [4*4])
+{
+	int w;
+	int h;
+	SDL_GetWindowSize (window, &w, &h);
+	CLR_V (4*4, m);
+	perspective_m4x4 (m, 45.0f, (float)w/(float)h, 0.1f, 100.0f);
+	PRINT_M4X4 (m);
 }

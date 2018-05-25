@@ -15,76 +15,7 @@ void GLAPIENTRY MessageCallback
 }
 
 
-struct Vertex
-{
-	GLfloat pos[4];
-	GLfloat col[4];
-};
 
-
-GLuint Mesh_Setup(GLuint shader_prog, struct Vertex *verts, GLuint num_verts)
-{
-	GLuint vao;
-	glCreateVertexArrays(1, &vao);
-
-	GLuint pos_attrib_loc = glGetAttribLocation(shader_prog, "pos");
-	GLuint col_attrib_loc = glGetAttribLocation(shader_prog, "col");
-
-	glVertexArrayAttribFormat(vao, pos_attrib_loc, 3, GL_FLOAT, GL_FALSE, (GLuint)offsetof(struct Vertex, pos));
-	glVertexArrayAttribFormat(vao, col_attrib_loc, 4, GL_FLOAT, GL_FALSE, (GLuint)offsetof(struct Vertex, col));
-
-	glVertexArrayAttribBinding(vao, pos_attrib_loc, 0);
-	glVertexArrayAttribBinding(vao, col_attrib_loc, 0);
-
-	glEnableVertexArrayAttrib(vao, pos_attrib_loc);
-	glEnableVertexArrayAttrib(vao, col_attrib_loc);
-
-	GLuint vbo;
-	glCreateBuffers(1, &vbo);
-	glNamedBufferStorage(vbo, sizeof(struct Vertex) * num_verts, verts, 0);
-
-	glVertexArrayVertexBuffer(vao, 0, vbo, 0, sizeof(struct Vertex));
-	return vao;
-}
-
-
-void gen_grid (struct Vertex * verts, size_t count, float sizex, float sizey)
-{
-	size_t j = 0;
-	for (size_t i = 0; i < count; i = i + 1)
-	{
-			float xx;
-			float yy;
-			
-			if (j == count){return;}
-			xx = 0.0f + (float)i * sizex;
-			yy = 0.0f;
-			SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
-			SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
-			j = j + 1;
-			
-			if (j == count){return;}
-			xx = 0.0f + (float)i * sizex;
-			yy = (float)count * sizey * 0.25;
-			SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
-			SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
-			j = j + 1;
-			
-			if (j == count){return;}
-			xx = 0.0f;
-			yy = 0.0f + (float)i * sizey;
-			SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
-			SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
-			j = j + 1;
-			
-			if (j == count){return;}
-			xx = (float)count * sizex * 0.25;
-			yy = 0.0f + (float)i * sizey;
-			SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
-			SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
-			j = j + 1;
-	}
-}
 
 
 int main(int argc, char *argv[])
@@ -101,9 +32,6 @@ int main(int argc, char *argv[])
 	SDL_GL_SetAttribute (SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute (SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute (SDL_GL_CONTEXT_MINOR_VERSION, 5);
-	printf ("%s %i\n", "SDL_GL_CONTEXT_PROFILE_MASK", SDL_GL_CONTEXT_PROFILE_MASK);
-	printf ("%s %i\n", "SDL_GL_CONTEXT_MAJOR_VERSION", SDL_GL_CONTEXT_MAJOR_VERSION);
-	printf ("%s %i\n", "SDL_GL_CONTEXT_MINOR_VERSION", SDL_GL_CONTEXT_MINOR_VERSION);
 
 	//App variables:
 	SDL_Window * window;
@@ -112,26 +40,23 @@ int main(int argc, char *argv[])
 	GLuint uniform_mvp;
 	float mvp [4*4];
 	float mrx [4*4];
+	float mry [4*4];
+	float mrxyz [4*4];
 	float mp [4*4];
 	float ax = 0.0f;
+	float ay = 0.0f;
 	float mt [4*4];
 	float temp [4*4];
 	IDENTITY_M (4, 4, mvp);
 	IDENTITY_M (4, 4, mrx);
+	IDENTITY_M (4, 4, mry);
 	IDENTITY_M (4, 4, mt);
 	
 	
 	window = SDL_CreateWindow ("OpenGL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_OPENGL);
 	ASSERT_F (window != NULL, "SDL_CreateWindow: %s", SDL_GetError());
 	
-	{
-		int w;
-		int h;
-		SDL_GetWindowSize (window, &w, &h);
-		CLR_V (4*4, mp);
-		perspective_m4x4 (mp, 45.0f, (float)w/(float)h, 0.1f, 100.0f);
-		PRINT_M4X4 (mp);
-	}
+	app_make_perspective (window, mp);
 	
 	context = SDL_GL_CreateContext (window);
 	ASSERT_F (context != NULL, "SDL_GL_CreateContext: %s", SDL_GetError());
@@ -158,9 +83,9 @@ int main(int argc, char *argv[])
 	
 	struct Vertex tri_data [3] = 
 	{
-		[0].pos = { -0.5f, -0.5f, 0.0f, 1.0f }, [0].col = { 1.0f, 0.0f, 0.0f, 1.0f },
-		[1].pos = {  0.5f, -0.5f, 0.0f, 1.0f }, [1].col = { 0.0f, 1.0f, 0.0f, 1.0f },
-		[2].pos = {  0.0f,  0.5f, 0.0f, 1.0f }, [2].col = { 0.0f, 0.0f, 1.0f, 1.0f }
+		[0].pos = { -0.5f, -0.5f, 0.0f, 1.0f}, [0].col = { 1.0f, 0.0f, 0.0f, 1.0f },
+		[1].pos = {  0.5f, -0.5f, 0.0f, 1.0f}, [1].col = { 0.0f, 1.0f, 0.0f, 1.0f },
+		[2].pos = {  0.0f,  0.5f, 0.0f, 1.0f}, [2].col = { 0.0f, 0.0f, 1.0f, 1.0f }
 	};
 
 	struct Vertex sqr_data [6] = 
@@ -179,9 +104,9 @@ int main(int argc, char *argv[])
 	gen_grid (grid_data + 200, 100, -0.1f, 0.1f);
 	gen_grid (grid_data + 300, 100, -0.1f, -0.1f);
 	
-	GLuint tri_vao = Mesh_Setup (program, tri_data, 3);
-	GLuint sqr_vao = Mesh_Setup (program, sqr_data, 6);
-	GLuint grid_vao = Mesh_Setup (program, grid_data, 400);
+	GLuint tri_vao = gpu_load_verts (program, tri_data, 3);
+	GLuint sqr_vao = gpu_load_verts (program, sqr_data, 6);
+	GLuint grid_vao = gpu_load_verts (program, grid_data, 400);
 	GLuint num_verts = 0;
 	GLfloat scr_col[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	const Uint8 * keyboard = SDL_GetKeyboardState (NULL);
@@ -255,12 +180,15 @@ int main(int argc, char *argv[])
 		mt [TZ_M4X4] += keyboard [SDL_SCANCODE_S] * -0.01f;
 		mt [TY_M4X4] += keyboard [SDL_SCANCODE_SPACE] * -0.01f;
 		mt [TY_M4X4] += keyboard [SDL_SCANCODE_LCTRL] * 0.01f;
-		ax += keyboard [SDL_SCANCODE_LEFT]*0.1f;
-		ax += keyboard [SDL_SCANCODE_RIGHT]*-0.1f;
-		ROTY_M4X4 (mrx, ax);
-		//MUL_M4X4 (mvp, mrx, mt);
+		ax += keyboard [SDL_SCANCODE_UP]*0.01f;
+		ax += keyboard [SDL_SCANCODE_DOWN]*-0.01f;
+		ay += keyboard [SDL_SCANCODE_LEFT]*0.01f;
+		ay += keyboard [SDL_SCANCODE_RIGHT]*-0.01f;
+		ROTX_M4X4 (mrx, ax);
+		ROTY_M4X4 (mry, ay);
+		MUL_M4X4 (mrxyz, mrx, mry);
 		MUL_M4X4 (temp, mp, mt);
-		MUL_M4X4 (mvp, temp, mrx);
+		MUL_M4X4 (mvp, temp, mrxyz);
 		
 		glUseProgram (program);
 		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, mvp);
