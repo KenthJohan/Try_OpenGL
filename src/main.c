@@ -98,15 +98,13 @@ int main(int argc, char *argv[])
 		[5].pos = { -0.5f, -0.5f, 0.0f, 1.0f }, [5].col = { 1.0f, 0.0f, 0.0f, 1.0f }
 	};
 	
-	struct Vertex grid_data [400] = {0};
-	gen_grid (grid_data + 000, 100, 0.1f, 0.1f);
-	gen_grid (grid_data + 100, 100, 0.1f, -0.1f);
-	gen_grid (grid_data + 200, 100, -0.1f, 0.1f);
-	gen_grid (grid_data + 300, 100, -0.1f, -0.1f);
+	#define GRID_COUNT 84
+	struct Vertex grid_data [GRID_COUNT] = {0};
+	gen_grid (grid_data, GRID_COUNT, -10.0f, 10.0f, -10.0f, 10.0f, 1.0f);
 	
 	GLuint tri_vao = gpu_load_verts (program, tri_data, 3);
 	GLuint sqr_vao = gpu_load_verts (program, sqr_data, 6);
-	GLuint grid_vao = gpu_load_verts (program, grid_data, 400);
+	GLuint grid_vao = gpu_load_verts (program, grid_data, GRID_COUNT);
 	GLuint num_verts = 0;
 	GLfloat scr_col[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	const Uint8 * keyboard = SDL_GetKeyboardState (NULL);
@@ -166,9 +164,6 @@ int main(int argc, char *argv[])
 					PRINT_M4X4 (mvp);
 					printf ("\n");
 					break;
-					
-					
-					
 				}
 				break;
 			}
@@ -198,7 +193,7 @@ int main(int argc, char *argv[])
 		glDrawArrays (GL_TRIANGLES, 0, 3);
 		
 		glBindVertexArray (grid_vao);
-		glDrawArrays (GL_LINES, 0, 400);
+		glDrawArrays (GL_LINES, 0, GRID_COUNT);
 		
 		//printf ("glGetError %i\n", glGetError ());
 		fflush (stdout);

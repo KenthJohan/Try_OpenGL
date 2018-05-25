@@ -1,6 +1,8 @@
 #pragma once
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
+#include "mat.h"
+
 
 struct app_shader
 {
@@ -113,41 +115,44 @@ GLuint gpu_load_verts (GLuint program, struct Vertex * verts, GLuint count)
 }
 
 
-void gen_grid (struct Vertex * verts, size_t count, float sizex, float sizey)
+void gen_grid (struct Vertex * verts, size_t count, float x1, float x2, float y1, float y2, float r)
 {
+	float xx;
+	float yy;
+	float const xd = (x2 - x1);
+	float const yd = (y2 - y1);
 	size_t j = 0;
 	for (size_t i = 0; i < count; i = i + 1)
 	{
-		float xx;
-		float yy;
-		
+
 		if (j == count){return;}
-		xx = 0.0f + (float)i * sizex;
-		yy = 0.0f;
+		xx = x1 + r * (float)i;
+		yy = y1;
 		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
 		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
 		j = j + 1;
 		
 		if (j == count){return;}
-		xx = 0.0f + (float)i * sizex;
-		yy = (float)count * sizey * 0.25;
+		xx = x1 + r * (float)i;
+		yy = y2;
+		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
+		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+		j = j + 1;
+
+		if (j == count){return;}
+		xx = x1;
+		yy = y1 + r * (float)i;
 		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
 		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
 		j = j + 1;
 		
 		if (j == count){return;}
-		xx = 0.0f;
-		yy = 0.0f + (float)i * sizey;
+		xx = x2;
+		yy = y1 + r * (float)i;
 		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
 		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
 		j = j + 1;
 		
-		if (j == count){return;}
-		xx = (float)count * sizex * 0.25;
-		yy = 0.0f + (float)i * sizey;
-		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
-		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
-		j = j + 1;
 	}
 }
 
@@ -161,3 +166,6 @@ void app_make_perspective (SDL_Window * window, float m [4*4])
 	perspective_m4x4 (m, 45.0f, (float)w/(float)h, 0.1f, 100.0f);
 	PRINT_M4X4 (m);
 }
+
+
+
