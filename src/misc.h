@@ -119,8 +119,8 @@ void gen_grid (struct Vertex * verts, size_t count, float x1, float x2, float y1
 {
 	float xx;
 	float yy;
-	float const xd = (x2 - x1);
-	float const yd = (y2 - y1);
+	//float const xd = (x2 - x1);
+	//float const yd = (y2 - y1);
 	size_t j = 0;
 	for (size_t i = 0; i < count; i = i + 1)
 	{
@@ -177,9 +177,11 @@ struct Mesh
 };
 
 
-
 void mesh_draw (struct Mesh * mesh)
 {
 	glBindVertexArray (mesh->vao);
 	glDrawArrays (mesh->mode, 0, mesh->vert_count);
 }
+
+
+

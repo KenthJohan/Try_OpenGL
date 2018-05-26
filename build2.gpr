@@ -10,9 +10,15 @@ project Build2 is
 		"lib/glew-2.1.0/include"
 	);
 	
+	-- If atleast one main program excludes SDL then
+	-- all program that includes SDL will not be it self.
+	-- It will have the same output of any program that is without SDL.
+	-- The only diffrence is the program size.
+	
 	Main_Files :=
 	(
-		"main.c"
+		"main.c",
+		"test_opengl.c"
 	);
 	
 	for Main use Main_Files;
@@ -20,14 +26,17 @@ project Build2 is
 	for Source_Files use Main_Files &
 	();
 	
-	package Builder is 
+	package Builder is
+		--for Executable ("main.c") use "main.exe";
+		--for Executable ("test_mat.c") use "test_mat.exe";
 	end Builder;
 
 	package Compiler is
 		for Driver ("C") use "C:/Program Files/mingw-w64/x86_64-7.3.0-posix-seh-rt_v5-rev0/mingw64/bin/gcc";
 		for Switches ("C") use 
 		(
-			--"-Wno-error=unused-function",
+			"-Wno-unused-function",
+			"-Wno-error=unused-function",
 			--"-Wno-missing-field-initializers",
 			--"-Wno-missing-braces", 
 			--"-Wno-error=unused-but-set-variable",
@@ -83,7 +92,7 @@ project Build2 is
 		);
 		
 		for Switches ("main.c") use SDL_Flags & GLEW_Flags;
-
+		for Switches ("test_opengl.c") use SDL_Flags & GLEW_Flags;
 
 	end Linker;
 

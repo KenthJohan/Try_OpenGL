@@ -31,7 +31,7 @@ struct Camera
 
 
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	fprintf (stderr, "main\n");
 	ASSERT_F (argc == 1, "No arg allowed");
@@ -71,8 +71,8 @@ int main (int argc, char *argv[])
 	glewExperimental = GL_TRUE;
 	glewInit ();
 
-	printf ("Using opengl version %s....\n", glGetString (GL_VERSION));
-	printf ("Using glsl version %s.....\n", glGetString (GL_SHADING_LANGUAGE_VERSION));
+	printf ("Using opengl version %s.\n", glGetString (GL_VERSION));
+	printf ("Using glsl version %s.\n", glGetString (GL_SHADING_LANGUAGE_VERSION));
 
 	//During init, enable debug output
 	//glEnable (GL_DEBUG_OUTPUT);
