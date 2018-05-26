@@ -87,7 +87,7 @@ int main (int argc, char *argv[])
 		{0, GL_VERTEX_SHADER, "shader.glvs"},
 		{0, GL_FRAGMENT_SHADER, "shader.glfs"}
 	};
-	program = app_create_program (shaders, 2);
+	program = app_create_program (shaders, COUNTE (shaders));
 	uniform_mvp = glGetUniformLocation (program, "mvp");
 	ASSERT_F (uniform_mvp >= 0, "glGetUniformLocation no uniform found.");
 
@@ -204,18 +204,18 @@ int main (int argc, char *argv[])
 			}
 		}
 		
-		cam.mt [TX_M4X4] += keyboard [SDL_SCANCODE_D] * -0.01f;
-		cam.mt [TX_M4X4] += keyboard [SDL_SCANCODE_A] * 0.01f;
-		cam.mt [TZ_M4X4] += keyboard [SDL_SCANCODE_W] * 0.01f;
-		cam.mt [TZ_M4X4] += keyboard [SDL_SCANCODE_S] * -0.01f;
-		cam.mt [TY_M4X4] += keyboard [SDL_SCANCODE_SPACE] * -0.01f;
-		cam.mt [TY_M4X4] += keyboard [SDL_SCANCODE_LCTRL] * 0.01f;
+		cam.mt [TX_M4] += keyboard [SDL_SCANCODE_D] * -0.01f;
+		cam.mt [TX_M4] += keyboard [SDL_SCANCODE_A] * 0.01f;
+		cam.mt [TZ_M4] += keyboard [SDL_SCANCODE_W] * 0.01f;
+		cam.mt [TZ_M4] += keyboard [SDL_SCANCODE_S] * -0.01f;
+		cam.mt [TY_M4] += keyboard [SDL_SCANCODE_SPACE] * -0.01f;
+		cam.mt [TY_M4] += keyboard [SDL_SCANCODE_LCTRL] * 0.01f;
 		cam.ax += keyboard [SDL_SCANCODE_UP]*0.01f;
 		cam.ax += keyboard [SDL_SCANCODE_DOWN]*-0.01f;
 		cam.ay += keyboard [SDL_SCANCODE_LEFT]*0.01f;
 		cam.ay += keyboard [SDL_SCANCODE_RIGHT]*-0.01f;
-		ROTX_M4X4 (cam.mrx, cam.ax);
-		ROTY_M4X4 (cam.mry, cam.ay);
+		ROTX_M4 (cam.mrx, cam.ax);
+		ROTY_M4 (cam.mry, cam.ay);
 		mul_m4 (cam.mvp, cam.mrx, cam.mry);
 		mul_m4 (cam.mvp, cam.mt, cam.mvp);
 		mul_m4 (cam.mvp, cam.mp, cam.mvp);

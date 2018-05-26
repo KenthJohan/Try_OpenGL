@@ -1,6 +1,11 @@
 #pragma once
 #include <math.h>
 
+#define MIN(a, b) (((a)<(b))?(a):(b))
+#define MAX(a, b) (((a)>(b))?(a):(b))
+#define COUNTE(x) (sizeof(x) / sizeof(*(x)))
+
+
 // Set vector scalar
 // (v := {x | x = s})
 #define SET_VS(N, v, s)                                                 \
@@ -152,9 +157,9 @@
 #define MAJC(w, r, c) (((w)*(c)) + (r))
 #define MAJX MAJC
 
-#define TX_M4X4 MAJX(4, 0, 3)
-#define TY_M4X4 MAJX(4, 1, 3)
-#define TZ_M4X4 MAJX(4, 2, 3)
+#define TX_M4 MAJX(4, 0, 3)
+#define TY_M4 MAJX(4, 1, 3)
+#define TZ_M4 MAJX(4, 2, 3)
 
 
 #define PRINT_M4(m, fmt)\
@@ -193,19 +198,19 @@
 
 
 
-#define ROTX_M4X4(m, a)\
+#define ROTX_M4(m, a)\
 (m)[5] = cos (a);\
 (m)[6] = sin (a);\
 (m)[9] = -sin (a);\
 (m)[10] = cos (a);\
 
-#define ROTY_M4X4(m, a)\
+#define ROTY_M4(m, a)\
 (m)[0] = cos (a);\
 (m)[2] = -sin (a);\
 (m)[8] = sin (a);\
 (m)[10] = cos (a);\
 
-#define ROTZ_M4X4(m, a)\
+#define ROTZ_M4(m, a)\
 (m)[0] = cos (a);\
 (m)[1] = sin (a);\
 (m)[4] = -sin (a);\
@@ -221,7 +226,7 @@
 }\
 
 
-#define FRUSTUM_M4X4(m, l, r, b, t, n, f)\
+#define FRUSTUM_M4(m, l, r, b, t, n, f)\
 (m)[0] = (2*(n))/((r)-(l));\
 (m)[5] = (2*(n))/((t)-(b));\
 (m)[8] = ((r)+(l))/((r)-(l));\
@@ -231,12 +236,12 @@
 (m)[14] = (-2*(f)*(n))/((f)-(n));\
 
 
-static void perspective_m4x4 (float m [4*4], float fov, float aspect, float near, float far)
+static void perspective_M4 (float m [4*4], float fov, float aspect, float near, float far)
 {
 	float tangent = tan ((M_PI/180.0f) * (fov / 2.0f));
 	float height = near * tangent;
 	float width = height * aspect;
-	FRUSTUM_M4X4 (m, -width, width, -height, height, near, far);
+	FRUSTUM_M4 (m, -width, width, -height, height, near, far);
 }
 
 

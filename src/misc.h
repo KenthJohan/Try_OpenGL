@@ -163,7 +163,7 @@ void app_update_projection (SDL_Window * window, float m [4*4])
 	int h;
 	SDL_GetWindowSize (window, &w, &h);
 	CLR_V (4*4, m);
-	perspective_m4x4 (m, 45.0f, (float)w/(float)h, 0.1f, 100.0f);
+	perspective_M4 (m, 45.0f, (float)w/(float)h, 0.1f, 100.0f);
 	glViewport (0, 0, w, h);
 }
 
