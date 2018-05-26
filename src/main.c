@@ -9,7 +9,9 @@
  
 #define FMT_INT ANSIC (ANSIC_NORMAL, ANSIC_YELLOW, ANSIC_DEFAULT) "%02i " ANSIC_RESET
 #define FMT_FLT ANSIC (ANSIC_NORMAL, ANSIC_CYAN, ANSIC_DEFAULT) "%04.1f " ANSIC_RESET
-
+#define APP_WINDOW_WIDTH 1024
+#define APP_WINDOW_HEIGHT 768
+#define APP_TITLE "My OpenGL test window"
 
 void GLAPIENTRY MessageCallback
 (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * message, const void * userParam)
@@ -56,18 +58,16 @@ int main (int argc, char *argv[])
 	GLuint uniform_mvp;
 	struct Camera cam;
 	
-	window = SDL_CreateWindow ("OpenGL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_OPENGL);
+	window = SDL_CreateWindow 
+	(
+		APP_TITLE, 
+		SDL_WINDOWPOS_CENTERED, 
+		SDL_WINDOWPOS_CENTERED, 
+		APP_WINDOW_WIDTH, 
+		APP_WINDOW_WIDTH, 
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+	);
 	ASSERT_F (window != NULL, "SDL_CreateWindow: %s", SDL_GetError());
-	
-	IDENTITY_M (4, 4, cam.mvp);
-	IDENTITY_M (4, 4, cam.mrx);
-	IDENTITY_M (4, 4, cam.mry);
-	IDENTITY_M (4, 4, cam.mt);
-	app_make_perspective (window, cam.mp);
-	PRINT_M4 (cam.mp, FMT_FLT);
-	cam.ax = 0.0f;
-	cam.ay = 0.0f;
-	cam.az = 0.0f;
 	
 	context = SDL_GL_CreateContext (window);
 	ASSERT_F (context != NULL, "SDL_GL_CreateContext: %s", SDL_GetError());
@@ -135,6 +135,19 @@ int main (int argc, char *argv[])
 	GLfloat scr_col[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	const Uint8 * keyboard = SDL_GetKeyboardState (NULL);
 
+
+
+	
+	IDENTITY_M (4, 4, cam.mvp);
+	IDENTITY_M (4, 4, cam.mrx);
+	IDENTITY_M (4, 4, cam.mry);
+	IDENTITY_M (4, 4, cam.mt);
+	app_update_projection (window, cam.mp);
+	PRINT_M4 (cam.mp, FMT_FLT);
+	cam.ax = 0.0f;
+	cam.ay = 0.0f;
+	cam.az = 0.0f;
+
 	while (1)
 	{
 		
@@ -152,9 +165,15 @@ int main (int argc, char *argv[])
 					case SDL_WINDOWEVENT_CLOSE:
 					printf ("SDL_WINDOWEVENT_CLOSE");
 					break;
+				
+					case SDL_WINDOWEVENT_RESIZED:
+					//printf ("Window %d resized to %dx%d\n",event.window.windowID, event.window.data1, event.window.data2);
+					app_update_projection (window, cam.mp);
+					break;
 				}
 				break;
-				
+
+
 				case SDL_KEYDOWN:
 				switch (event.key.keysym.sym)
 				{
