@@ -164,7 +164,6 @@ void app_make_perspective (SDL_Window * window, float m [4*4])
 	SDL_GetWindowSize (window, &w, &h);
 	CLR_V (4*4, m);
 	perspective_m4x4 (m, 45.0f, (float)w/(float)h, 0.1f, 100.0f);
-	PRINT_M4X4 (m);
 }
 
 

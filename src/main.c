@@ -7,7 +7,10 @@
 #include "mat.h"
 #include "misc.h"
  
- 
+#define FMT_INT ANSIC (ANSIC_NORMAL, ANSIC_YELLOW, ANSIC_DEFAULT) "%02i " ANSIC_RESET
+#define FMT_FLT ANSIC (ANSIC_NORMAL, ANSIC_CYAN, ANSIC_DEFAULT) "%04.1f " ANSIC_RESET
+
+
 void GLAPIENTRY MessageCallback
 (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * message, const void * userParam)
 {
@@ -61,6 +64,7 @@ int main (int argc, char *argv[])
 	IDENTITY_M (4, 4, cam.mry);
 	IDENTITY_M (4, 4, cam.mt);
 	app_make_perspective (window, cam.mp);
+	PRINT_M4 (cam.mp, FMT_FLT);
 	cam.ax = 0.0f;
 	cam.ay = 0.0f;
 	cam.az = 0.0f;
@@ -173,7 +177,7 @@ int main (int argc, char *argv[])
 					case SDLK_RIGHT:
 					case SDLK_UP:
 					case SDLK_DOWN:
-					PRINT_M4X4 (cam.mvp);
+					PRINT_M4 (cam.mvp, FMT_FLT);
 					printf ("\n");
 					break;
 				}

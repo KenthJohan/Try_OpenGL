@@ -157,12 +157,12 @@
 #define TZ_M4X4 MAJX(4, 2, 3)
 
 
-#define PRINT_M4X4(m)\
+#define PRINT_M4(m, fmt)\
 {\
 	for (size_t _r = 0; _r < 4; _r++)\
 	{\
 		for (size_t _c = 0; _c < 4; _c++)\
-			printf ("%2.2f ", m [MAJX(4, _r, _c)]);\
+			printf (fmt, m [MAJX(4, _r, _c)]);\
 		printf ("\n");\
 	}\
 }
