@@ -2,6 +2,7 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include "mat.h"
+#include "vertex.h"
 
 
 struct app_shader
@@ -80,13 +81,6 @@ GLuint app_create_program (struct app_shader * shaders, size_t count)
 	}
 	return program;
 }
-
-
-struct Vertex
-{
-	GLfloat pos [4];
-	GLfloat col [4];
-};
 
 
 GLuint gpu_load_verts (GLuint program, struct Vertex * verts, GLuint count)
