@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "debug.h"
+#include "debug_gl.h"
 #include "mat.h"
 #include "misc.h"
  
@@ -33,7 +34,7 @@ struct Camera
 };
 
 
-void cam_update (struct Camera * cam, uint8_t * keyboard)
+void cam_update (struct Camera * cam, uint8_t const * keyboard)
 {
 	cam->mt [TX_M4] += keyboard [SDL_SCANCODE_D] * -0.01f;
 	cam->mt [TX_M4] += keyboard [SDL_SCANCODE_A] * 0.01f;
@@ -226,6 +227,7 @@ int main (int argc, char *argv[])
 		glUseProgram (program);
 		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, cam.mvp);
 		glClearBufferfv (GL_COLOR, 0, scr_col);
+		GL_CHECK_ERROR;
 		
 		mesh_draw (&triangle);
 		mesh_draw (&square);

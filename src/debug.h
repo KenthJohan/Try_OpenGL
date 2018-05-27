@@ -7,7 +7,11 @@
 #include "ANSIC.h"
 
 //https://stackoverflow.com/questions/8487986/file-macro-shows-full-path
+#ifdef _WIN32
+#define __RELATIVE_FILE__ (strrchr("\\" __FILE__, '\\') + 1)
+#else
 #define __RELATIVE_FILE__ (strrchr("/" __FILE__, '/') + 1)
+#endif
 
 //https://gcc.gnu.org/onlinedocs/gcc/Variadic-Macros.html
 #define ASSERT_F(A, F, ...) if (!(A)) {assert_format (__COUNTER__, __RELATIVE_FILE__, __LINE__, __func__, #A, F, ## __VA_ARGS__);}
@@ -28,7 +32,7 @@ static void assert_format (int id, char const * file, int line, char const * fn,
 		ANSIC (ANSIC_BOLD, ANSIC_BLUE, ANSIC_DEFAULT) "%04i" ANSIC_RESET " in "
 		ANSIC (ANSIC_NORMAL, ANSIC_YELLOW , ANSIC_DEFAULT) "%s" ANSIC_RESET " () " 
 		ANSIC (ANSIC_BOLD, ANSIC_BLACK, ANSIC_RED) "[%s]" ANSIC_RESET " "
-		ANSIC (ANSIC_BOLD, ANSIC_RED , ANSIC_DEFAULT) "[%04i:%s]: " ANSIC_RESET,
+		"[%04i:" ANSIC (ANSIC_BOLD, ANSIC_RED , ANSIC_DEFAULT) "%s" ANSIC_RESET "]:",
 		id, 
 		file, 
 		line, 
