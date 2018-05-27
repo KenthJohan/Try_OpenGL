@@ -25,6 +25,7 @@ struct Camera
 {
 	float mvp [4*4];
 	float mt [4*4];
+	float mr [4*4];
 	float mp [4*4];
 	float mrx [4*4];
 	float mry [4*4];
@@ -37,22 +38,34 @@ struct Camera
 void cam_update (struct Camera * cam, uint8_t const * keyboard)
 {
 	float t [4];
-	t [0] = (keyboard [SDL_SCANCODE_A] - keyboard [SDL_SCANCODE_D]) * 0.05f;
-	t [1] = (keyboard [SDL_SCANCODE_LCTRL] - keyboard [SDL_SCANCODE_SPACE]) * 0.05f;
-	t [2] = (keyboard [SDL_SCANCODE_W] - keyboard [SDL_SCANCODE_S]) * 0.05f;
-	cam->mt [TX_M4] += t [0];
-	cam->mt [TY_M4] += t [1];
-	cam->mt [TZ_M4] += t [2];
-	cam->ax += keyboard [SDL_SCANCODE_UP]*0.01f;
-	cam->ax += keyboard [SDL_SCANCODE_DOWN]*-0.01f;
-	cam->ay += keyboard [SDL_SCANCODE_LEFT]*0.01f;
-	cam->ay += keyboard [SDL_SCANCODE_RIGHT]*-0.01f;
+	t [0] = (keyboard [SDL_SCANCODE_A] - keyboard [SDL_SCANCODE_D]) * 0.03f;
+	t [1] = (keyboard [SDL_SCANCODE_LCTRL] - keyboard [SDL_SCANCODE_SPACE]) * 0.03f;
+	t [2] = (keyboard [SDL_SCANCODE_W] - keyboard [SDL_SCANCODE_S]) * 0.03f;
+	
+	cam->ax += (keyboard [SDL_SCANCODE_DOWN] - keyboard [SDL_SCANCODE_UP]) * 0.02f;
+	cam->ay += (keyboard [SDL_SCANCODE_RIGHT] - keyboard [SDL_SCANCODE_LEFT]) * 0.02f;
+	
 	ROTX_M4 (cam->mrx, cam->ax);
 	ROTY_M4 (cam->mry, cam->ay);
+	IDENTITY_M (4, 4, cam->mr);
 	IDENTITY_M (4, 4, cam->mvp);
+	mul_m4 (cam->mr, cam->mry, cam->mr);
+	mul_m4 (cam->mr, cam->mrx, cam->mr);
+	
+	cam->mt [TX_M4] += t [0] * cam->mr [0];
+	cam->mt [TY_M4] += t [0] * cam->mr [4];
+	cam->mt [TZ_M4] += t [0] * cam->mr [8];
+	
+	cam->mt [TX_M4] += t [1] * cam->mr [1];
+	cam->mt [TY_M4] += t [1] * cam->mr [5];
+	cam->mt [TZ_M4] += t [1] * cam->mr [9];
+	
+	cam->mt [TX_M4] += t [2] * cam->mr [2];
+	cam->mt [TY_M4] += t [2] * cam->mr [6];
+	cam->mt [TZ_M4] += t [2] * cam->mr [10];
+	
 	mul_m4 (cam->mvp, cam->mt, cam->mvp);
-	mul_m4 (cam->mvp, cam->mry, cam->mvp);
-	mul_m4 (cam->mvp, cam->mrx, cam->mvp);
+	mul_m4 (cam->mvp, cam->mr, cam->mvp);
 	mul_m4 (cam->mvp, cam->mp, cam->mvp);
 }
 
