@@ -76,10 +76,10 @@ gl_getstr_code (GLenum code)
 __attribute__ ((__unused__)) static void gl_check_error 
 (int id, char const * file, int line, char const * fn)
 {
+	GLenum code = glGetError();
+	if (code == GL_NO_ERROR) {return;}
 	while (1)
 	{
-		GLenum code = glGetError();
-		if (code == GL_NO_ERROR) {break;}
 		fprintf	
 		(
 			stderr,
@@ -97,13 +97,15 @@ __attribute__ ((__unused__)) static void gl_check_error
 			code
 		);
 		fprintf (stderr, "\n");
+		code = glGetError();
+		if (code == GL_NO_ERROR) {break;}
 	}
 	abort ();
 }
 
 
 void GLAPIENTRY glDebugOutput
-(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * message, void * arg)
+(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * message, void const * arg)
 {
 	//ignore non-significant error/warning codes
 	if(id == 131169 || id == 131185 || id == 131218 || id == 131204) {return;}

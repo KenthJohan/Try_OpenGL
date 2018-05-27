@@ -56,7 +56,6 @@ void cam_update (struct Camera * cam, uint8_t const * keyboard)
 
 int main (int argc, char *argv[])
 {
-	fprintf (stderr, "main\n");
 	ASSERT_F (argc == 1, "No arg allowed");
 	ASSERT_F (argv != NULL, "NULL error");
 	
@@ -97,8 +96,11 @@ int main (int argc, char *argv[])
 	printf ("Using glsl version %s.....\n", glGetString (GL_SHADING_LANGUAGE_VERSION));
 
 	//During init, enable debug output
-	//glEnable (GL_DEBUG_OUTPUT);
+	glEnable (GL_DEBUG_OUTPUT);
+    glEnable (GL_DEBUG_OUTPUT_SYNCHRONOUS); 
 	//glDebugMessageCallback (MessageCallback, 0);
+	glDebugMessageCallback (glDebugOutput, 0);
+	glDebugMessageControl (GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 	
 	struct app_shader shaders [2] = 
 	{
@@ -166,6 +168,7 @@ int main (int argc, char *argv[])
 	cam.ay = 0.0f;
 	cam.az = 0.0f;
 
+	printf ("main loop:\n");
 	while (1)
 	{
 		
@@ -221,13 +224,14 @@ int main (int argc, char *argv[])
 				break;
 			}
 		}
-		
 		cam_update (&cam, keyboard);
+		
 		
 		glUseProgram (program);
 		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, cam.mvp);
 		glClearBufferfv (GL_COLOR, 0, scr_col);
 		GL_CHECK_ERROR;
+		
 		
 		mesh_draw (&triangle);
 		mesh_draw (&square);
