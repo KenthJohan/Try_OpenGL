@@ -211,6 +211,33 @@
 #define MAJC(w, r, c) (((w)*(c)) + (r))
 #define MAJX MAJC
 
+
+
+
+
+#define V4_SUM(v, s)\
+{\
+	(s) = 0;\
+    for (size_t _i = 0; _i < 4; _i++)\
+        (s) += (v) [_i]\
+}
+
+
+#define V4_DOT(s, u, v)\
+{\
+    (s) = 0;\
+    for (size_t _i = 0; _i < 4; _i++)\
+        (s) += (u)[_i] * (v)[_i];\
+}
+
+
+#define V4_MUL_SCALAR(r, v, s)\
+{\
+    for (size_t _i = 0; _i < 4; _i++)\
+        (r)[_i] = (v)[_i] * (s);\
+}
+
+
 //Translation vector
 #define M4_TX 12
 #define M4_T0 12
@@ -231,6 +258,13 @@
 #define M4_V3 12
 #define M4_VT 12
 
+
+#define M4_IDENTITY(m)\
+{\
+    for (size_t _i = 0; _i < 4; _i++)\
+    for (size_t _j = 0; _j < 4; _j++)\
+        (m)[_i*4 + _j] = (_i == _j ? 1.0 : 0.0);\
+}
 
 
 #define M4_PRINT(m, fmt)\
@@ -265,6 +299,16 @@
 		(m) [MAJX(4, _r, _c)] += (a) [MAJX(4, _r, _k)] * (b) [MAJX(4, _k, _c)];\
 }
 
+
+//y := y + M^T v
+#define M4_MAC_TRANSPOSE(y, mt, v)\
+{\
+	for (size_t _r = 0; _r < 4; _r = _r + 1)\
+	for (size_t _c = 0; _c < 4; _c = _c + 1)\
+	{\
+		(y) [_r] += (mt) [MAJX (4, _c, _r)] * (v) [_c];\
+	}\
+}
 
 
 #define M4_ROTX(m, a)\
@@ -322,7 +366,15 @@ static void m4f_mul (float m [4*4], float a [4*4], float b [4*4])
 }
 
 
-
+void v4f_normalize (float r [4], float v [4])
+{
+	float sum;
+	V4_DOT (sum, v, v);
+	if (sum == 0) return;
+	sum = 1.0f / sqrtf (sum);
+	printf ("s %f\n", sum);
+	V4_MUL_SCALAR (r, v, sum);
+}
 
 
 

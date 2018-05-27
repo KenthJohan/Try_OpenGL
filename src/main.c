@@ -14,12 +14,6 @@
 #define APP_WINDOW_HEIGHT 768
 #define APP_TITLE "My OpenGL test window"
 
-void GLAPIENTRY MessageCallback
-(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * message, const void * userParam)
-{
-	fprintf (stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n", (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ), type, severity, message);
-}
-
 
 struct Camera
 {
@@ -38,21 +32,25 @@ struct Camera
 void cam_update (struct Camera * cam, uint8_t const * keyboard)
 {
 	float t [4];
-	t [0] = (keyboard [SDL_SCANCODE_A] - keyboard [SDL_SCANCODE_D]) * 0.03f;
-	t [1] = (keyboard [SDL_SCANCODE_LCTRL] - keyboard [SDL_SCANCODE_SPACE]) * 0.03f;
-	t [2] = (keyboard [SDL_SCANCODE_W] - keyboard [SDL_SCANCODE_S]) * 0.03f;
+	t [0] = (keyboard [SDL_SCANCODE_A] - keyboard [SDL_SCANCODE_D]);
+	t [1] = (keyboard [SDL_SCANCODE_LCTRL] - keyboard [SDL_SCANCODE_SPACE]);
+	t [2] = (keyboard [SDL_SCANCODE_W] - keyboard [SDL_SCANCODE_S]);
 	t [3] = 0;
+	
+	v4f_normalize (t, t);
+	V4_MUL_SCALAR (t, t, 0.05f);
+	
 	
 	cam->ax += (keyboard [SDL_SCANCODE_DOWN] - keyboard [SDL_SCANCODE_UP]) * 0.02f;
 	cam->ay += (keyboard [SDL_SCANCODE_RIGHT] - keyboard [SDL_SCANCODE_LEFT]) * 0.02f;
 	
 	M4_ROTX (cam->mrx, cam->ax);
 	M4_ROTY (cam->mry, cam->ay);
-	IDENTITY_M (4, 4, cam->mr);
-	IDENTITY_M (4, 4, cam->mvp);
+	M4_IDENTITY (cam->mr);
+	M4_IDENTITY (cam->mvp);
 	m4f_mul (cam->mr, cam->mry, cam->mr);
 	m4f_mul (cam->mr, cam->mrx, cam->mr);
-	MN_MAC_TRANSPOSE (4, 4, cam->mt + M4_VT, cam->mr, t);
+	M4_MAC_TRANSPOSE (cam->mt + M4_VT, cam->mr, t);
 	
 	/*
 	cam->mt [M4_TX] += t [0] * cam->mr [0];
