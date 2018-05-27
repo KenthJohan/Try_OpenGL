@@ -48,8 +48,10 @@ void cam_update (struct Camera * cam, uint8_t const * keyboard)
 	cam->ay += keyboard [SDL_SCANCODE_RIGHT]*-0.01f;
 	ROTX_M4 (cam->mrx, cam->ax);
 	ROTY_M4 (cam->mry, cam->ay);
-	mul_m4 (cam->mvp, cam->mrx, cam->mry);
+	IDENTITY_M (4, 4, cam->mvp);
 	mul_m4 (cam->mvp, cam->mt, cam->mvp);
+	mul_m4 (cam->mvp, cam->mry, cam->mvp);
+	mul_m4 (cam->mvp, cam->mrx, cam->mvp);
 	mul_m4 (cam->mvp, cam->mp, cam->mvp);
 }
 
