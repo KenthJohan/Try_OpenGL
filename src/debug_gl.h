@@ -11,13 +11,13 @@ gl_getstr_source (GLenum source)
 {
 	switch (source)
 	{
-		case GL_DEBUG_SOURCE_API:             return "Source: API";
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   return "Source: Window System";
-		case GL_DEBUG_SOURCE_SHADER_COMPILER: return "Source: Shader Compiler";
-		case GL_DEBUG_SOURCE_THIRD_PARTY:     return "Source: Third Party";
-		case GL_DEBUG_SOURCE_APPLICATION:     return "Source: Application";
-		case GL_DEBUG_SOURCE_OTHER:           return "Source: Other";
-		default: return "Source: Unknown";
+		case GL_DEBUG_SOURCE_API:             return "GL_DEBUG_SOURCE_API";
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   return "GL_DEBUG_SOURCE_WINDOW_SYSTEM";
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: return "GL_DEBUG_SOURCE_SHADER_COMPILER";
+		case GL_DEBUG_SOURCE_THIRD_PARTY:     return "GL_DEBUG_SOURCE_THIRD_PARTY Party";
+		case GL_DEBUG_SOURCE_APPLICATION:     return "GL_DEBUG_SOURCE_APPLICATION";
+		case GL_DEBUG_SOURCE_OTHER:           return "GL_DEBUG_SOURCE_OTHER";
+		default: return "UNKNOWN";
 	}
 }
 
@@ -27,16 +27,16 @@ gl_getstr_type (GLenum type)
 {
 	switch (type)
 	{
-		case GL_DEBUG_TYPE_ERROR:               return "Type: Error";
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "Type: Deprecated Behaviour";
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  return "Type: Undefined Behaviour"; 
-		case GL_DEBUG_TYPE_PORTABILITY:         return "Type: Portability";
-		case GL_DEBUG_TYPE_PERFORMANCE:         return "Type: Performance";
-		case GL_DEBUG_TYPE_MARKER:              return "Type: Marker";
-		case GL_DEBUG_TYPE_PUSH_GROUP:          return "Type: Push Group";
-		case GL_DEBUG_TYPE_POP_GROUP:           return "Type: Pop Group";
-		case GL_DEBUG_TYPE_OTHER:               return "Type: Other";
-		default: return "Type: Unknown";
+		case GL_DEBUG_TYPE_ERROR:               return "GL_DEBUG_TYPE_ERROR";
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR";
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  return "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR"; 
+		case GL_DEBUG_TYPE_PORTABILITY:         return "GL_DEBUG_TYPE_PORTABILITY";
+		case GL_DEBUG_TYPE_PERFORMANCE:         return "GL_DEBUG_TYPE_PERFORMANCE";
+		case GL_DEBUG_TYPE_MARKER:              return "GL_DEBUG_TYPE_MARKER";
+		case GL_DEBUG_TYPE_PUSH_GROUP:          return "GL_DEBUG_TYPE_PUSH_GROUP";
+		case GL_DEBUG_TYPE_POP_GROUP:           return "GL_DEBUG_TYPE_POP_GROUP";
+		case GL_DEBUG_TYPE_OTHER:               return "GL_DEBUG_TYPE_OTHER";
+		default: return "UNKNOWN";
 	}
 }
 
@@ -46,11 +46,11 @@ gl_getstr_severity (GLenum severity)
 {
 	switch (severity)
 	{
-		case GL_DEBUG_SEVERITY_HIGH:         return "Severity: high";
-		case GL_DEBUG_SEVERITY_MEDIUM:       return "Severity: medium";
-		case GL_DEBUG_SEVERITY_LOW:          return "Severity: low";
-		case GL_DEBUG_SEVERITY_NOTIFICATION: return "Severity: notification";
-		default: return "Severity: Unknown";
+		case GL_DEBUG_SEVERITY_HIGH:         return "GL_DEBUG_SEVERITY_HIGH";
+		case GL_DEBUG_SEVERITY_MEDIUM:       return "GL_DEBUG_SEVERITY_MEDIUM";
+		case GL_DEBUG_SEVERITY_LOW:          return "GL_DEBUG_SEVERITY_LOW";
+		case GL_DEBUG_SEVERITY_NOTIFICATION: return "GL_DEBUG_SEVERITY_NOTIFICATION";
+		default: return "UNKNOWN";
 	}
 }
 
@@ -69,6 +69,73 @@ gl_getstr_code (GLenum code)
 		case GL_OUT_OF_MEMORY:                 return "GL_OUT_OF_MEMORY";
 		case GL_INVALID_FRAMEBUFFER_OPERATION: return "GL_INVALID_FRAMEBUFFER_OPERATION";
 		default: return "Unknown error";
+	}
+}
+
+
+static char const * 
+gl_getcol_source (GLenum source)
+{
+	switch (source)
+	{
+		case GL_DEBUG_SOURCE_API:             return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_SOURCE_THIRD_PARTY:     return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_SOURCE_APPLICATION:     return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_SOURCE_OTHER:           return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		default: return ANSIC (ANSIC_NORMAL, ANSIC_DEFAULT, ANSIC_DEFAULT);
+	}
+}
+
+
+static char const * 
+gl_getcol_type (GLenum type)
+{
+	switch (type)
+	{
+		case GL_DEBUG_TYPE_ERROR:               return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_TYPE_PORTABILITY:         return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_TYPE_PERFORMANCE:         return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_TYPE_MARKER:              return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_TYPE_PUSH_GROUP:          return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_TYPE_POP_GROUP:           return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_TYPE_OTHER:               return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		default: return ANSIC (ANSIC_NORMAL, ANSIC_DEFAULT, ANSIC_DEFAULT);
+	}
+}
+
+
+static char const * 
+gl_getcol_severity (GLenum severity)
+{
+	switch (severity)
+	{
+		case GL_DEBUG_SEVERITY_HIGH:         return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
+		case GL_DEBUG_SEVERITY_MEDIUM:       return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
+		case GL_DEBUG_SEVERITY_LOW:          return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
+		case GL_DEBUG_SEVERITY_NOTIFICATION: return ANSIC (ANSIC_NORMAL, ANSIC_YELLOW, ANSIC_DEFAULT);
+		default: return ANSIC (ANSIC_NORMAL, ANSIC_DEFAULT, ANSIC_DEFAULT);
+	}
+}
+
+
+static char const * 
+gl_getcol_code (GLenum code)
+{
+	switch (code)
+	{
+		case GL_NO_ERROR:                      return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
+		case GL_INVALID_ENUM:                  return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
+		case GL_INVALID_VALUE:                 return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
+		case GL_INVALID_OPERATION:             return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
+		case GL_STACK_OVERFLOW:                return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
+		case GL_STACK_UNDERFLOW:               return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
+		case GL_OUT_OF_MEMORY:                 return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
+		case GL_INVALID_FRAMEBUFFER_OPERATION: return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
+		default: return ANSIC (ANSIC_NORMAL, ANSIC_DEFAULT, ANSIC_DEFAULT);
 	}
 }
 
@@ -108,11 +175,14 @@ void GLAPIENTRY glDebugOutput
 (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar * message, void const * arg)
 {
 	//ignore non-significant error/warning codes
-	if(id == 131169 || id == 131185 || id == 131218 || id == 131204) {return;}
-	fprintf (stderr, "Debug message (%i) : %s\n", id, message);
-	fprintf (stderr, "%s\n", gl_getstr_source (source));
-	fprintf (stderr, "%s\n", gl_getstr_type (type));
-	fprintf (stderr, "%s\n", gl_getstr_severity (severity));
+	//if(id == 131169 || id == 131185 || id == 131218 || id == 131204) {return;}
+	fprintf (stderr, "%i | ", id);
+	fprintf (stderr, "%s%s" ANSIC_RESET " | ", gl_getcol_source (source), gl_getstr_source (source));
+	fprintf (stderr, "%s%s" ANSIC_RESET " | ", gl_getcol_type (type), gl_getstr_type (type));
+	fprintf (stderr, "%s%s" ANSIC_RESET " | ", gl_getcol_severity (severity), gl_getstr_severity (severity));
+	fprintf (stderr, "%s", message);
+	fprintf (stderr, "\n");
+	fflush (stderr);
 }
 
 

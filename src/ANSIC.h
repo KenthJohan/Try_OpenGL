@@ -3,13 +3,13 @@
 //https://misc.flogisoft.com/bash/tip_colors_and_formatting
 
 //Stringyfier for c preproccessor
-#define ANSIC_Str1(X) #X
-#define ANSIC_Str(X) ANSIC_Str1 (X)
+#define ANSIC_STR1(x) #x
+#define ANSIC_STR(x) ANSIC_STR1 (x)
 
 
 //ANSI text color escape string formatter
-#define ANSIC(Text_Attribute, Foreground_Color, Background_Color) \
-"\x1B[" ANSIC_Str (Text_Attribute) ";3" ANSIC_Str (Foreground_Color) ";4" ANSIC_Str (Background_Color) "m"
+#define ANSIC(text, foreground, background) \
+"\x1B[" ANSIC_STR (text) ";3" ANSIC_STR (foreground) ";4" ANSIC_STR (background) "m"
 
 
 //Used for text attributes
