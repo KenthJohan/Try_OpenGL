@@ -41,6 +41,7 @@ void cam_update (struct Camera * cam, uint8_t const * keyboard)
 	t [0] = (keyboard [SDL_SCANCODE_A] - keyboard [SDL_SCANCODE_D]) * 0.03f;
 	t [1] = (keyboard [SDL_SCANCODE_LCTRL] - keyboard [SDL_SCANCODE_SPACE]) * 0.03f;
 	t [2] = (keyboard [SDL_SCANCODE_W] - keyboard [SDL_SCANCODE_S]) * 0.03f;
+	t [3] = 0;
 	
 	cam->ax += (keyboard [SDL_SCANCODE_DOWN] - keyboard [SDL_SCANCODE_UP]) * 0.02f;
 	cam->ay += (keyboard [SDL_SCANCODE_RIGHT] - keyboard [SDL_SCANCODE_LEFT]) * 0.02f;
@@ -51,19 +52,20 @@ void cam_update (struct Camera * cam, uint8_t const * keyboard)
 	IDENTITY_M (4, 4, cam->mvp);
 	mul_m4 (cam->mr, cam->mry, cam->mr);
 	mul_m4 (cam->mr, cam->mrx, cam->mr);
-	
+	MAC_MTV (4, 4, cam->mt + MAT4_VT, cam->mr, t);
+	/*
 	cam->mt [TX_M4] += t [0] * cam->mr [0];
-	cam->mt [TY_M4] += t [0] * cam->mr [4];
-	cam->mt [TZ_M4] += t [0] * cam->mr [8];
-	
 	cam->mt [TX_M4] += t [1] * cam->mr [1];
-	cam->mt [TY_M4] += t [1] * cam->mr [5];
-	cam->mt [TZ_M4] += t [1] * cam->mr [9];
-	
 	cam->mt [TX_M4] += t [2] * cam->mr [2];
-	cam->mt [TY_M4] += t [2] * cam->mr [6];
+	
+	cam->mt [TZ_M4] += t [0] * cam->mr [8];
+	cam->mt [TZ_M4] += t [1] * cam->mr [9];
 	cam->mt [TZ_M4] += t [2] * cam->mr [10];
 	
+	cam->mt [TY_M4] += t [0] * cam->mr [4];
+	cam->mt [TY_M4] += t [1] * cam->mr [5];
+	cam->mt [TY_M4] += t [2] * cam->mr [6];
+	*/
 	mul_m4 (cam->mvp, cam->mt, cam->mvp);
 	mul_m4 (cam->mvp, cam->mr, cam->mvp);
 	mul_m4 (cam->mvp, cam->mp, cam->mvp);

@@ -172,6 +172,27 @@
         (r)[_i] = (a)[_i] * (b)[_i];\
 }
 
+//y := y + M v
+#define MAC_MV(w, h, y, m, v)\
+{\
+	for (size_t _r = 0; _r < h; _r = _r + 1)\
+	for (size_t _c = 0; _c < w; _c = _c + 1)\
+	{\
+		(y) [_r] += (m) [MAJX (w, _r, _c)] * (v) [_c];\
+	}\
+}
+
+//y := y + M^T v
+#define MAC_MTV(w, h, y, mt, v)\
+{\
+	for (size_t _r = 0; _r < h; _r = _r + 1)\
+	for (size_t _c = 0; _c < w; _c = _c + 1)\
+	{\
+		(y) [_r] += (mt) [MAJX (w, _c, _r)] * (v) [_c];\
+	}\
+}
+
+
 #define PRINT_M4(m, fmt)\
 {\
 	for (size_t _r = 0; _r < 4; _r++)\
@@ -261,6 +282,10 @@ static void mul_m4 (float m [4*4], float a [4*4], float b [4*4])
 	MUL_M4 (t, a, b);
 	memcpy (m, t, sizeof (t));
 }
+
+
+
+
 
 
 
