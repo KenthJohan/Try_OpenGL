@@ -46,29 +46,30 @@ void cam_update (struct Camera * cam, uint8_t const * keyboard)
 	cam->ax += (keyboard [SDL_SCANCODE_DOWN] - keyboard [SDL_SCANCODE_UP]) * 0.02f;
 	cam->ay += (keyboard [SDL_SCANCODE_RIGHT] - keyboard [SDL_SCANCODE_LEFT]) * 0.02f;
 	
-	ROTX_M4 (cam->mrx, cam->ax);
-	ROTY_M4 (cam->mry, cam->ay);
+	M4_ROTX (cam->mrx, cam->ax);
+	M4_ROTY (cam->mry, cam->ay);
 	IDENTITY_M (4, 4, cam->mr);
 	IDENTITY_M (4, 4, cam->mvp);
-	mul_m4 (cam->mr, cam->mry, cam->mr);
-	mul_m4 (cam->mr, cam->mrx, cam->mr);
-	MAC_MTV (4, 4, cam->mt + MAT4_VT, cam->mr, t);
+	m4f_mul (cam->mr, cam->mry, cam->mr);
+	m4f_mul (cam->mr, cam->mrx, cam->mr);
+	MN_MAC_TRANSPOSE (4, 4, cam->mt + M4_VT, cam->mr, t);
+	
 	/*
-	cam->mt [TX_M4] += t [0] * cam->mr [0];
-	cam->mt [TX_M4] += t [1] * cam->mr [1];
-	cam->mt [TX_M4] += t [2] * cam->mr [2];
+	cam->mt [M4_TX] += t [0] * cam->mr [0];
+	cam->mt [M4_TX] += t [1] * cam->mr [1];
+	cam->mt [M4_TX] += t [2] * cam->mr [2];
 	
-	cam->mt [TZ_M4] += t [0] * cam->mr [8];
-	cam->mt [TZ_M4] += t [1] * cam->mr [9];
-	cam->mt [TZ_M4] += t [2] * cam->mr [10];
+	cam->mt [M4_TZ] += t [0] * cam->mr [8];
+	cam->mt [M4_TZ] += t [1] * cam->mr [9];
+	cam->mt [M4_TZ] += t [2] * cam->mr [10];
 	
-	cam->mt [TY_M4] += t [0] * cam->mr [4];
-	cam->mt [TY_M4] += t [1] * cam->mr [5];
-	cam->mt [TY_M4] += t [2] * cam->mr [6];
+	cam->mt [M4_TY] += t [0] * cam->mr [4];
+	cam->mt [M4_TY] += t [1] * cam->mr [5];
+	cam->mt [M4_TY] += t [2] * cam->mr [6];
 	*/
-	mul_m4 (cam->mvp, cam->mt, cam->mvp);
-	mul_m4 (cam->mvp, cam->mr, cam->mvp);
-	mul_m4 (cam->mvp, cam->mp, cam->mvp);
+	m4f_mul (cam->mvp, cam->mt, cam->mvp);
+	m4f_mul (cam->mvp, cam->mr, cam->mvp);
+	m4f_mul (cam->mvp, cam->mp, cam->mvp);
 }
 
 
@@ -181,7 +182,7 @@ int main (int argc, char *argv[])
 	IDENTITY_M (4, 4, cam.mry);
 	IDENTITY_M (4, 4, cam.mt);
 	app_update_projection (window, cam.mp);
-	PRINT_M4 (cam.mp, FMT_FLT);
+	M4_PRINT (cam.mp, FMT_FLT);
 	cam.ax = 0.0f;
 	cam.ay = 0.0f;
 	cam.az = 0.0f;
@@ -235,7 +236,7 @@ int main (int argc, char *argv[])
 					case SDLK_RIGHT:
 					case SDLK_UP:
 					case SDLK_DOWN:
-					PRINT_M4 (cam.mvp, FMT_FLT);
+					M4_PRINT (cam.mvp, FMT_FLT);
 					printf ("\n");
 					break;
 				}

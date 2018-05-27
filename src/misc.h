@@ -122,29 +122,29 @@ void gen_grid (struct Vertex * verts, size_t count, float x1, float x2, float y1
 		if (j == count){return;}
 		xx = x1 + r * (float)i;
 		yy = y1;
-		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
-		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+		V4_SET (verts [j].pos, xx, -0.5f, yy, 1.0f);
+		V4_SET (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
 		j = j + 1;
 		
 		if (j == count){return;}
 		xx = x1 + r * (float)i;
 		yy = y2;
-		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
-		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+		V4_SET (verts [j].pos, xx, -0.5f, yy, 1.0f);
+		V4_SET (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
 		j = j + 1;
 
 		if (j == count){return;}
 		xx = x1;
 		yy = y1 + r * (float)i;
-		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
-		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+		V4_SET (verts [j].pos, xx, -0.5f, yy, 1.0f);
+		V4_SET (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
 		j = j + 1;
 		
 		if (j == count){return;}
 		xx = x2;
 		yy = y1 + r * (float)i;
-		SET_V4 (verts [j].pos, xx, -0.5f, yy, 1.0f);
-		SET_V4 (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
+		V4_SET (verts [j].pos, xx, -0.5f, yy, 1.0f);
+		V4_SET (verts [j].col, 1.0f, 0.0f, 0.0f, 1.0f);
 		j = j + 1;
 		
 	}
@@ -157,7 +157,7 @@ void app_update_projection (SDL_Window * window, float m [4*4])
 	int h;
 	SDL_GetWindowSize (window, &w, &h);
 	CLR_V (4*4, m);
-	perspective_M4 (m, 45.0f, (float)w/(float)h, 0.1f, 100.0f);
+	m4f_perspective (m, 45.0f, (float)w/(float)h, 0.1f, 100.0f);
 	glViewport (0, 0, w, h);
 }
 

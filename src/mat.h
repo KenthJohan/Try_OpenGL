@@ -148,32 +148,14 @@
 }
 
 
-
-
-//Matrix can be stored in column major or row major.
-//Column major means that a continuous array is a column vector.
-//Row major means that a continuous array is a row vector.
-#define MAJR(w, r, c) (((w)*(r)) + (c))
-#define MAJC(w, r, c) (((w)*(c)) + (r))
-#define MAJX MAJC
-
-#define TX_M4 MAJX(4, 0, 3)
-#define TY_M4 MAJX(4, 1, 3)
-#define TZ_M4 MAJX(4, 2, 3)
-
-#define MAT4_VX 0
-#define MAT4_VY 4
-#define MAT4_VZ 8
-#define MAT4_VT 12
-
-#define VEC_HADAMARD_PRODUCT(n, r, a, b)\
+#define VN_HADAMARD_PRODUCT(n, r, a, b)\
 {\
     for (size_t _i = 0; _i < (n); _i++)\
         (r)[_i] = (a)[_i] * (b)[_i];\
 }
 
 //y := y + M v
-#define MAC_MV(w, h, y, m, v)\
+#define MN_MAC(w, h, y, m, v)\
 {\
 	for (size_t _r = 0; _r < h; _r = _r + 1)\
 	for (size_t _c = 0; _c < w; _c = _c + 1)\
@@ -183,7 +165,7 @@
 }
 
 //y := y + M^T v
-#define MAC_MTV(w, h, y, mt, v)\
+#define MN_MAC_TRANSPOSE(w, h, y, mt, v)\
 {\
 	for (size_t _r = 0; _r < h; _r = _r + 1)\
 	for (size_t _c = 0; _c < w; _c = _c + 1)\
@@ -193,62 +175,118 @@
 }
 
 
-#define PRINT_M4(m, fmt)\
+#define MM_MUL(w, m, a, b)\
+{\
+	for (size_t _c = 0; _c < w; _c = _c + 1)\
+	for (size_t _r = 0; _r < w; _r = _r + 1)\
+	{\
+		(m) [MAJX (w, _r, _c)] = 0.0f;\
+		for(size_t _k = 0; _k < w; _k = _k + 1)\
+			(m) [MAJX (w, _r, _c)] += (a) [MAJX (w, _r, _k)] * (b) [MAJX (w, _k, _c)];\
+	}\
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Matrix can be stored in column major or row major.
+//Column major means that a continuous array is a column vector.
+//Row major means that a continuous array is a row vector.
+#define MAJR(w, r, c) (((w)*(r)) + (c))
+#define MAJC(w, r, c) (((w)*(c)) + (r))
+#define MAJX MAJC
+
+//Translation vector
+#define M4_TX 12
+#define M4_T0 12
+#define M4_TY 13
+#define M4_T1 13
+#define M4_TZ 14
+#define M4_T2 14
+#define M4_TW 15
+#define M4_T3 15
+
+//Column vectors
+#define M4_V0 0
+#define M4_VX 0
+#define M4_V1 4
+#define M4_VY 4
+#define M4_V2 8
+#define M4_VZ 8
+#define M4_V3 12
+#define M4_VT 12
+
+
+
+#define M4_PRINT(m, fmt)\
 {\
 	for (size_t _r = 0; _r < 4; _r++)\
 	{\
 		for (size_t _c = 0; _c < 4; _c++)\
-			printf (fmt, m [MAJX(4, _r, _c)]);\
+			printf (fmt, (m) [MAJX(4, _r, _c)]);\
 		printf ("\n");\
 	}\
 }
 
 
-#define MUL_M(w, m, a, b)\
-{\
-	for (size_t _c = 0; _c < w; _c = _c + 1)\
-	for (size_t _r = 0; _r < w; _r = _r + 1)\
-	{\
-		m[MAJX (w, _r, _c)] = 0.0f;\
-		for(size_t _k = 0; _k < w; _k = _k + 1)\
-			m [MAJX (w, _r, _c)] += a [MAJX (w, _r, _k)] * b [MAJX (w, _k, _c)];\
-	}\
-}
-
-
-#define MUL_M4(m, a, b)\
+//M = A*B
+#define M4_MUL_CPY(m, a, b)\
 {\
 	for (size_t _c = 0; _c < 4; _c = _c + 1)\
 	for (size_t _r = 0; _r < 4; _r = _r + 1)\
 	{\
-		m[MAJX(4, _r, _c)] = 0.0f;\
+		(m) [MAJX(4, _r, _c)] = 0.0f;\
 		for(size_t _k = 0; _k < 4; _k = _k + 1)\
-			m [MAJX(4, _r, _c)] += a [MAJX(4, _r, _k)] * b [MAJX(4, _k, _c)];\
+			(m) [MAJX(4, _r, _c)] += (a) [MAJX(4, _r, _k)] * (b) [MAJX(4, _k, _c)];\
 	}\
 }
 
 
+#define M4_MAC(m, a, b)\
+{\
+	for (size_t _c = 0; _c < 4; _c = _c + 1)\
+	for (size_t _r = 0; _r < 4; _r = _r + 1)\
+	for (size_t _k = 0; _k < 4; _k = _k + 1)\
+		(m) [MAJX(4, _r, _c)] += (a) [MAJX(4, _r, _k)] * (b) [MAJX(4, _k, _c)];\
+}
 
-#define ROTX_M4(m, a)\
+
+
+#define M4_ROTX(m, a)\
 (m)[5] = cos (a);\
 (m)[6] = sin (a);\
 (m)[9] = -sin (a);\
 (m)[10] = cos (a);\
 
-#define ROTY_M4(m, a)\
+#define M4_ROTY(m, a)\
 (m)[0] = cos (a);\
 (m)[2] = -sin (a);\
 (m)[8] = sin (a);\
 (m)[10] = cos (a);\
 
-#define ROTZ_M4(m, a)\
+#define M4_ROTZ(m, a)\
 (m)[0] = cos (a);\
 (m)[1] = sin (a);\
 (m)[4] = -sin (a);\
 (m)[5] = cos (a);\
 
 
-#define SET_V4(v,x,y,z,w)\
+#define V4_SET(v,x,y,z,w)\
 {\
 (v)[0] = x;\
 (v)[1] = y;\
@@ -257,7 +295,7 @@
 }\
 
 
-#define FRUSTUM_M4(m, l, r, b, t, n, f)\
+#define M4_FRUSTUM_NZ(m, l, r, b, t, n, f)\
 (m)[0] = (2*(n))/((r)-(l));\
 (m)[5] = (2*(n))/((t)-(b));\
 (m)[8] = ((r)+(l))/((r)-(l));\
@@ -267,19 +305,19 @@
 (m)[14] = (-2*(f)*(n))/((f)-(n));\
 
 
-static void perspective_M4 (float m [4*4], float fov, float aspect, float near, float far)
+static void m4f_perspective (float m [4*4], float fov, float aspect, float near, float far)
 {
 	float tangent = tan ((M_PI/180.0f) * (fov / 2.0f));
 	float height = near * tangent;
 	float width = height * aspect;
-	FRUSTUM_M4 (m, -width, width, -height, height, near, far);
+	M4_FRUSTUM_NZ (m, -width, width, -height, height, near, far);
 }
 
 
-static void mul_m4 (float m [4*4], float a [4*4], float b [4*4])
+static void m4f_mul (float m [4*4], float a [4*4], float b [4*4])
 {
 	float t [4*4];
-	MUL_M4 (t, a, b);
+	M4_MUL_CPY (t, a, b);
 	memcpy (m, t, sizeof (t));
 }
 
