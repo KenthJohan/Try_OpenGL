@@ -36,12 +36,13 @@ struct Camera
 
 void cam_update (struct Camera * cam, uint8_t const * keyboard)
 {
-	cam->mt [TX_M4] += keyboard [SDL_SCANCODE_D] * -0.01f;
-	cam->mt [TX_M4] += keyboard [SDL_SCANCODE_A] * 0.01f;
-	cam->mt [TZ_M4] += keyboard [SDL_SCANCODE_W] * 0.01f;
-	cam->mt [TZ_M4] += keyboard [SDL_SCANCODE_S] * -0.01f;
-	cam->mt [TY_M4] += keyboard [SDL_SCANCODE_SPACE] * -0.01f;
-	cam->mt [TY_M4] += keyboard [SDL_SCANCODE_LCTRL] * 0.01f;
+	float t [4];
+	t [0] = (keyboard [SDL_SCANCODE_A] - keyboard [SDL_SCANCODE_D]) * 0.05f;
+	t [1] = (keyboard [SDL_SCANCODE_LCTRL] - keyboard [SDL_SCANCODE_SPACE]) * 0.05f;
+	t [2] = (keyboard [SDL_SCANCODE_W] - keyboard [SDL_SCANCODE_S]) * 0.05f;
+	cam->mt [TX_M4] += t [0];
+	cam->mt [TY_M4] += t [1];
+	cam->mt [TZ_M4] += t [2];
 	cam->ax += keyboard [SDL_SCANCODE_UP]*0.01f;
 	cam->ax += keyboard [SDL_SCANCODE_DOWN]*-0.01f;
 	cam->ay += keyboard [SDL_SCANCODE_LEFT]*0.01f;

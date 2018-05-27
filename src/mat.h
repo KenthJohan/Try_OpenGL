@@ -161,6 +161,16 @@
 #define TY_M4 MAJX(4, 1, 3)
 #define TZ_M4 MAJX(4, 2, 3)
 
+#define MAT4_VX 0
+#define MAT4_VY 4
+#define MAT4_VZ 8
+#define MAT4_VT 12
+
+#define VEC_HADAMARD_PRODUCT(n, r, a, b)\
+{\
+    for (size_t _i = 0; _i < (n); _i++)\
+        (r)[_i] = (a)[_i] * (b)[_i];\
+}
 
 #define PRINT_M4(m, fmt)\
 {\
