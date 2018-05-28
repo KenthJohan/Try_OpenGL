@@ -5,12 +5,7 @@
 #include "vertex.h"
 
 
-struct app_shader
-{
-	GLuint handle;
-	GLenum kind;
-	char * filename;
-};
+
 
 
 char * app_malloc_file (char * filename)
@@ -32,56 +27,6 @@ char * app_malloc_file (char * filename)
 	fclose (file);
 	return buffer;
 }
-
-
-void app_create_shader (struct app_shader * shader)
-{
-	ASSERT_F 
-	(
-		(shader->kind == GL_VERTEX_SHADER) || 
-		(shader->kind == GL_FRAGMENT_SHADER), 
-		"Unsupported shader kind%s", ""
-	);
-	shader->handle = glCreateShader (shader->kind);
-	ASSERT_F (shader != 0, "glCreateShader error%s", "");
-	char * buffer = app_malloc_file (shader->filename);
-	glShaderSource (shader->handle, 1, (const GLchar **) &buffer, NULL);
-	free (buffer);
-	glCompileShader (shader->handle);
-	GLint status;
-	glGetShaderiv (shader->handle, GL_COMPILE_STATUS, &status);
-	char err_buf [512];
-	if (status != GL_TRUE)
-	{
-		glGetShaderInfoLog (shader->handle, sizeof (err_buf), NULL, err_buf);
-		err_buf [sizeof (err_buf) - 1] = '\0';
-	}
-	ASSERT_F (status == GL_TRUE, "Vertex shader compilation failed: %s", err_buf);
-}
-
-
-GLuint app_create_program (struct app_shader * shaders, size_t count)
-{
-	GLuint program;
-	program = glCreateProgram ();
-	ASSERT_F (program != 0, "glCreateProgram error%s", "");
-	for (size_t i = 0; i < count; i = i + 1)
-	{
-		app_create_shader (shaders + i);
-		glAttachShader (program, shaders [i].handle);
-	}
-	glLinkProgram (program);
-	//The shader objects are needed only for linking the program.
-	//We can delete them after the program is linked.
-	for (size_t i = 0; i < count; i = i + 1)
-	{
-		glDetachShader (program, shaders [i].handle);
-		glDeleteShader (shaders [i].handle);
-		shaders [i].handle = 0;
-	}
-	return program;
-}
-
 
 GLuint gpu_load_verts (GLuint program, struct Vertex * verts, GLuint count)
 {
@@ -149,33 +94,3 @@ void gen_grid (struct Vertex * verts, size_t count, float x1, float x2, float y1
 		
 	}
 }
-
-
-void app_update_projection (SDL_Window * window, float m [4*4])
-{
-	int w;
-	int h;
-	SDL_GetWindowSize (window, &w, &h);
-	CLR_V (4*4, m);
-	m4f_perspective (m, 45.0f, (float)w/(float)h, 0.1f, 100.0f);
-	glViewport (0, 0, w, h);
-}
-
-
-struct Mesh
-{
-	GLenum mode;
-	GLuint vao;
-	struct Vertex * vert_data;
-	size_t vert_count;
-};
-
-
-void mesh_draw (struct Mesh * mesh)
-{
-	glBindVertexArray (mesh->vao);
-	glDrawArrays (mesh->mode, 0, mesh->vert_count);
-}
-
-
-

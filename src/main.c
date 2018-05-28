@@ -7,6 +7,9 @@
 #include "debug_gl.h"
 #include "mat.h"
 #include "misc.h"
+#include "camera.h"
+#include "mesh.h"
+#include "shader.h"
  
 #define FMT_INT ANSIC (ANSIC_NORMAL, ANSIC_YELLOW, ANSIC_DEFAULT) "%02i " ANSIC_RESET
 #define FMT_FLT ANSIC (ANSIC_NORMAL, ANSIC_CYAN, ANSIC_DEFAULT) "%04.1f " ANSIC_RESET
@@ -15,60 +18,7 @@
 #define APP_TITLE "My OpenGL test window"
 
 
-struct Camera
-{
-	float mvp [4*4];
-	float mt [4*4];
-	float mr [4*4];
-	float mp [4*4];
-	float mrx [4*4];
-	float mry [4*4];
-	float ax;
-	float ay;
-	float az;
-};
 
-
-void cam_update (struct Camera * cam, uint8_t const * keyboard)
-{
-	float t [4];
-	t [0] = (keyboard [SDL_SCANCODE_A] - keyboard [SDL_SCANCODE_D]);
-	t [1] = (keyboard [SDL_SCANCODE_LCTRL] - keyboard [SDL_SCANCODE_SPACE]);
-	t [2] = (keyboard [SDL_SCANCODE_W] - keyboard [SDL_SCANCODE_S]);
-	t [3] = 0;
-	
-	v4f_normalize (t, t);
-	V4_MUL_SCALAR (t, t, 0.05f);
-	
-	
-	cam->ax += (keyboard [SDL_SCANCODE_DOWN] - keyboard [SDL_SCANCODE_UP]) * 0.02f;
-	cam->ay += (keyboard [SDL_SCANCODE_RIGHT] - keyboard [SDL_SCANCODE_LEFT]) * 0.02f;
-	
-	M4_ROTX (cam->mrx, cam->ax);
-	M4_ROTY (cam->mry, cam->ay);
-	M4_IDENTITY (cam->mr);
-	M4_IDENTITY (cam->mvp);
-	m4f_mul (cam->mr, cam->mry, cam->mr);
-	m4f_mul (cam->mr, cam->mrx, cam->mr);
-	M4_MAC_TRANSPOSE (cam->mt + M4_VT, cam->mr, t);
-	
-	/*
-	cam->mt [M4_TX] += t [0] * cam->mr [0];
-	cam->mt [M4_TX] += t [1] * cam->mr [1];
-	cam->mt [M4_TX] += t [2] * cam->mr [2];
-	
-	cam->mt [M4_TZ] += t [0] * cam->mr [8];
-	cam->mt [M4_TZ] += t [1] * cam->mr [9];
-	cam->mt [M4_TZ] += t [2] * cam->mr [10];
-	
-	cam->mt [M4_TY] += t [0] * cam->mr [4];
-	cam->mt [M4_TY] += t [1] * cam->mr [5];
-	cam->mt [M4_TY] += t [2] * cam->mr [6];
-	*/
-	m4f_mul (cam->mvp, cam->mt, cam->mvp);
-	m4f_mul (cam->mvp, cam->mr, cam->mvp);
-	m4f_mul (cam->mvp, cam->mp, cam->mvp);
-}
 
 
 int main (int argc, char *argv[])
@@ -119,12 +69,12 @@ int main (int argc, char *argv[])
 	glDebugMessageCallback (glDebugOutput, 0);
 	glDebugMessageControl (GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 	
-	struct app_shader shaders [2] = 
+	struct Shader shaders [2] = 
 	{
 		{0, GL_VERTEX_SHADER, "shader.glvs"},
 		{0, GL_FRAGMENT_SHADER, "shader.glfs"}
 	};
-	program = app_create_program (shaders, COUNTE (shaders));
+	program = program_create (shaders, COUNTE (shaders));
 	uniform_mvp = glGetUniformLocation (program, "mvp");
 	ASSERT_F (uniform_mvp >= 0, "glGetUniformLocation no uniform found.");
 
@@ -174,16 +124,8 @@ int main (int argc, char *argv[])
 
 
 
-	
-	IDENTITY_M (4, 4, cam.mvp);
-	IDENTITY_M (4, 4, cam.mrx);
-	IDENTITY_M (4, 4, cam.mry);
-	IDENTITY_M (4, 4, cam.mt);
-	app_update_projection (window, cam.mp);
+	camera_init (&cam, window);
 	M4_PRINT (cam.mp, FMT_FLT);
-	cam.ax = 0.0f;
-	cam.ay = 0.0f;
-	cam.az = 0.0f;
 
 	printf ("main loop:\n");
 	while (1)
@@ -206,7 +148,7 @@ int main (int argc, char *argv[])
 				
 					case SDL_WINDOWEVENT_RESIZED:
 					//printf ("Window %d resized to %dx%d\n",event.window.windowID, event.window.data1, event.window.data2);
-					app_update_projection (window, cam.mp);
+					gl_update_projection (window, cam.mp);
 					break;
 				}
 				break;
@@ -241,7 +183,8 @@ int main (int argc, char *argv[])
 				break;
 			}
 		}
-		cam_update (&cam, keyboard);
+		
+		camera_update (&cam, keyboard);
 		
 		
 		glUseProgram (program);
