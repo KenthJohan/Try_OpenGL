@@ -22,7 +22,6 @@ void gl_update_projection (SDL_Window * window, float m [4*4])
 	int w;
 	int h;
 	SDL_GetWindowSize (window, &w, &h);
-	CLR_V (4*4, m);
 	m4f_perspective (m, 45.0f, (float)w/(float)h, 0.1f, 100.0f);
 	glViewport (0, 0, w, h);
 }
@@ -34,6 +33,7 @@ void camera_init (struct Camera * cam, SDL_Window * window)
 	M4_IDENTITY (cam->mrx);
 	M4_IDENTITY (cam->mry);
 	M4_IDENTITY (cam->mt);
+	M4_FRUSTUM_INIT (cam->mp);
 	gl_update_projection (window, cam->mp);
 	cam->ax = 0.0f;
 	cam->ay = 0.0f;

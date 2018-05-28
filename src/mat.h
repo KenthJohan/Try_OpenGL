@@ -259,6 +259,15 @@
 #define M4_VT 12
 
 
+// Clear vector
+// (v := {x | x = 0})
+#define M4_CLR(m)\
+{\
+	for (size_t _i = 0; _i < 16; _i++)\
+		(m)[_i] = 0.0;\
+}
+
+
 #define M4_IDENTITY(m)\
 {\
     for (size_t _i = 0; _i < 4; _i++)\
@@ -339,14 +348,18 @@
 }\
 
 
-#define M4_FRUSTUM_NZ(m, l, r, b, t, n, f)\
+#define M4_FRUSTUM_UPDATE(m, l, r, b, t, n, f)\
 (m)[0] = (2*(n))/((r)-(l));\
 (m)[5] = (2*(n))/((t)-(b));\
 (m)[8] = ((r)+(l))/((r)-(l));\
 (m)[9] = ((t)+(b))/((t)-(b));\
 (m)[10] = (-(f)-(n))/((f)-(n));\
-(m)[11] = -1;\
 (m)[14] = (-2*(f)*(n))/((f)-(n));\
+
+
+#define M4_FRUSTUM_INIT(m)\
+M4_CLR (m);\
+(m)[11] = -1;
 
 
 static void m4f_perspective (float m [4*4], float fov, float aspect, float near, float far)
@@ -354,7 +367,7 @@ static void m4f_perspective (float m [4*4], float fov, float aspect, float near,
 	float tangent = tan ((M_PI/180.0f) * (fov / 2.0f));
 	float height = near * tangent;
 	float width = height * aspect;
-	M4_FRUSTUM_NZ (m, -width, width, -height, height, near, far);
+	M4_FRUSTUM_UPDATE (m, -width, width, -height, height, near, far);
 }
 
 
