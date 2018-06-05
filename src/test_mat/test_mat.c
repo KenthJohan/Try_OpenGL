@@ -27,16 +27,16 @@ int main (int argc, char *argv[])
 		memcpy (m1 + 4, (int []){5, 3, 5, 4}, sizeof (int) * 4);
 		memcpy (m1 + 8, (int []){1, 6, 0, 6}, sizeof (int) * 4);
 		memcpy (m1 + 12, (int []){8, 1, 9, 1}, sizeof (int) * 4);
-		PRINT_M4 (m1, FMT_INT);
-		printf ("*\n");
 		memcpy (m2 + 0, (int []){1, 0, 3, 2}, sizeof (int) * 4);
 		memcpy (m2 + 4, (int []){5, 3, 5, 0}, sizeof (int) * 4);
 		memcpy (m2 + 8, (int []){1, 6, 7, 6}, sizeof (int) * 4);
 		memcpy (m2 + 12, (int []){0, 1, 2, 1}, sizeof (int) * 4);
-		PRINT_M4 (m2, FMT_INT);
+		M4_MUL_CPY (r, m1, m2);
+		M4_PRINT (m1, FMT_INT);
+		printf ("*\n");
+		M4_PRINT (m2, FMT_INT);
 		printf ("=\n");
-		MUL_M (4, r, m1, m2);
-		PRINT_M4 (r, FMT_INT);
+		M4_PRINT (r, FMT_INT);
 		printf ("\n");
 	}
 	
@@ -49,16 +49,16 @@ int main (int argc, char *argv[])
 		memcpy (m1 + 4, (float []){5.0f, 3.0f, 5.0f, 4.0f}, sizeof (float) * 4);
 		memcpy (m1 + 8, (float []){1.0f, 6.0f, 0.0f, 6.0f}, sizeof (float) * 4);
 		memcpy (m1 + 12, (float []){8.0f, 1.0f, 9.0f, 1.0f}, sizeof (float) * 4);
-		PRINT_M4 (m1, FMT_FLT);
-		printf ("*\n");
 		memcpy (m2 + 0, (float []){1.0f, 0.0f, 3.0f, 2.0f}, sizeof (float) * 4);
 		memcpy (m2 + 4, (float []){5.0f, 3.0f, 5.0f, 0.0f}, sizeof (float) * 4);
 		memcpy (m2 + 8, (float []){1.0f, 6.0f, 7.0f, 6.0f}, sizeof (float) * 4);
 		memcpy (m2 + 12, (float []){0.0f, 1.0f, 2.0f, 1.0f}, sizeof (float) * 4);
-		PRINT_M4 (m2, FMT_FLT);
+		M4_MUL_CPY (r, m1, m2);
+		M4_PRINT (m1, FMT_FLT);
+		printf ("*\n");
+		M4_PRINT (m2, FMT_FLT);
 		printf ("=\n");
-		MUL_M (4, r, m1, m2);
-		PRINT_M4 (r, FMT_FLT);
+		M4_PRINT (r, FMT_FLT);
 		printf ("\n");
 	}
 	

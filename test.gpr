@@ -1,0 +1,8 @@
+aggregate project Test is
+   for Project_Files use 
+   (
+	   "test_read.gpr", 
+	   "test_mat.gpr", 
+	   "test_camera.gpr"
+   );
+end Test;

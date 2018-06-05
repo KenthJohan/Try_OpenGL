@@ -1,15 +1,19 @@
-project Build_Test is
+project Test_Mat is
 
 	for Languages use ("C");
 	for Object_Dir use "obj";
 	for Exec_Dir use "bin";
-	for Source_Dirs use ("src");
+	for Source_Dirs use 
+	(
+		"src/common",
+		"src/test_mat"
+	);
 
 	Main_Files :=
 	(
 		"test_mat.c",
 		"test_mat2.c",
-		"test_read.c"
+		"test_mat3.c"
 	);
 	
 	for Main use Main_Files;
@@ -50,4 +54,4 @@ project Build_Test is
 	end Linker;
 
 
-end Build_Test;
+end Test_Mat;

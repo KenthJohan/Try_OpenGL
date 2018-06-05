@@ -152,6 +152,10 @@ int main (int argc, char *argv[])
 					break;
 				}
 				break;
+				
+				case SDL_MOUSEMOTION:
+				sdl_get_mouse (window);
+				break;
 
 
 				case SDL_KEYDOWN:

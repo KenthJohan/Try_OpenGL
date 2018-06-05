@@ -3,9 +3,8 @@
 #include <SDL2/SDL.h>
 #include "mat.h"
 #include "vertex.h"
-
-
-
+#include "debug.h"
+#include "debug_gl.h"
 
 
 char * app_malloc_file (char * filename)
@@ -28,16 +27,25 @@ char * app_malloc_file (char * filename)
 	return buffer;
 }
 
+
 GLuint gpu_load_verts (GLuint program, struct Vertex * verts, GLuint count)
 {
 	GLuint vao;
 	glCreateVertexArrays (1, &vao);
 
 	GLuint pos_attrib_loc = glGetAttribLocation (program, "pos");
+	ASSERT_F (pos_attrib_loc >= 0, "glGetAttribLocation no attribute found.");
+	GL_CHECK_ERROR;
+	
 	GLuint col_attrib_loc = glGetAttribLocation (program, "col");
+	ASSERT_F (col_attrib_loc >= 0, "glGetAttribLocation no attribute found.");
+	GL_CHECK_ERROR;
 
 	glVertexArrayAttribFormat (vao, pos_attrib_loc, 4, GL_FLOAT, GL_FALSE, (GLuint)offsetof (struct Vertex, pos));
+	GL_CHECK_ERROR;
+	
 	glVertexArrayAttribFormat (vao, col_attrib_loc, 4, GL_FLOAT, GL_FALSE, (GLuint)offsetof (struct Vertex, col));
+	GL_CHECK_ERROR;
 
 	glVertexArrayAttribBinding (vao, pos_attrib_loc, 0);
 	glVertexArrayAttribBinding (vao, col_attrib_loc, 0);
@@ -93,4 +101,16 @@ void gen_grid (struct Vertex * verts, size_t count, float x1, float x2, float y1
 		j = j + 1;
 		
 	}
+}
+
+
+void sdl_get_mouse (SDL_Window * window)
+{
+	int w;
+	int h;
+	SDL_GetWindowSize (window, &w, &h);
+	int x;
+	int y;
+	SDL_GetMouseState (&x, &y);
+	printf ("(%f %f)\n", (float)x/(float)w - 0.5f, (float)y/(float)h - 0.5f);
 }
