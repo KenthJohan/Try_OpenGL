@@ -1,7 +1,7 @@
 #pragma once
 #include <GL/glew.h>
 #include "debug.h"
-#include "ANSIC.h"
+#include "TCOL.h"
 
 #define GL_CHECK_ERROR gl_check_error (__COUNTER__, __RELATIVE_FILE__, __LINE__, __func__)
 
@@ -78,13 +78,13 @@ gl_getcol_source (GLenum source)
 {
 	switch (source)
 	{
-		case GL_DEBUG_SOURCE_API:             return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		case GL_DEBUG_SOURCE_SHADER_COMPILER: return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		case GL_DEBUG_SOURCE_THIRD_PARTY:     return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		case GL_DEBUG_SOURCE_APPLICATION:     return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		case GL_DEBUG_SOURCE_OTHER:           return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		default: return ANSIC (ANSIC_NORMAL, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_SOURCE_API:             return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		case GL_DEBUG_SOURCE_THIRD_PARTY:     return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		case GL_DEBUG_SOURCE_APPLICATION:     return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		case GL_DEBUG_SOURCE_OTHER:           return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		default: return TCOL (TCOL_NORMAL, TCOL_DEFAULT, TCOL_DEFAULT);
 	}
 }
 
@@ -94,16 +94,16 @@ gl_getcol_type (GLenum type)
 {
 	switch (type)
 	{
-		case GL_DEBUG_TYPE_ERROR:               return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		case GL_DEBUG_TYPE_PORTABILITY:         return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		case GL_DEBUG_TYPE_PERFORMANCE:         return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		case GL_DEBUG_TYPE_MARKER:              return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		case GL_DEBUG_TYPE_PUSH_GROUP:          return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		case GL_DEBUG_TYPE_POP_GROUP:           return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		case GL_DEBUG_TYPE_OTHER:               return ANSIC (ANSIC_BOLD, ANSIC_DEFAULT, ANSIC_DEFAULT);
-		default: return ANSIC (ANSIC_NORMAL, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_TYPE_ERROR:               return TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT);
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		case GL_DEBUG_TYPE_PORTABILITY:         return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		case GL_DEBUG_TYPE_PERFORMANCE:         return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		case GL_DEBUG_TYPE_MARKER:              return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		case GL_DEBUG_TYPE_PUSH_GROUP:          return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		case GL_DEBUG_TYPE_POP_GROUP:           return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		case GL_DEBUG_TYPE_OTHER:               return TCOL (TCOL_BOLD, TCOL_DEFAULT, TCOL_DEFAULT);
+		default: return TCOL (TCOL_NORMAL, TCOL_DEFAULT, TCOL_DEFAULT);
 	}
 }
 
@@ -113,11 +113,11 @@ gl_getcol_severity (GLenum severity)
 {
 	switch (severity)
 	{
-		case GL_DEBUG_SEVERITY_HIGH:         return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
-		case GL_DEBUG_SEVERITY_MEDIUM:       return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
-		case GL_DEBUG_SEVERITY_LOW:          return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
-		case GL_DEBUG_SEVERITY_NOTIFICATION: return ANSIC (ANSIC_NORMAL, ANSIC_YELLOW, ANSIC_DEFAULT);
-		default: return ANSIC (ANSIC_NORMAL, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_DEBUG_SEVERITY_HIGH:         return TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT);
+		case GL_DEBUG_SEVERITY_MEDIUM:       return TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT);
+		case GL_DEBUG_SEVERITY_LOW:          return TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT);
+		case GL_DEBUG_SEVERITY_NOTIFICATION: return TCOL (TCOL_NORMAL, TCOL_YELLOW, TCOL_DEFAULT);
+		default: return TCOL (TCOL_NORMAL, TCOL_DEFAULT, TCOL_DEFAULT);
 	}
 }
 
@@ -127,15 +127,15 @@ gl_getcol_code (GLenum code)
 {
 	switch (code)
 	{
-		case GL_NO_ERROR:                      return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
-		case GL_INVALID_ENUM:                  return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
-		case GL_INVALID_VALUE:                 return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
-		case GL_INVALID_OPERATION:             return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
-		case GL_STACK_OVERFLOW:                return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
-		case GL_STACK_UNDERFLOW:               return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
-		case GL_OUT_OF_MEMORY:                 return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
-		case GL_INVALID_FRAMEBUFFER_OPERATION: return ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT);
-		default: return ANSIC (ANSIC_NORMAL, ANSIC_DEFAULT, ANSIC_DEFAULT);
+		case GL_NO_ERROR:                      return TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT);
+		case GL_INVALID_ENUM:                  return TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT);
+		case GL_INVALID_VALUE:                 return TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT);
+		case GL_INVALID_OPERATION:             return TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT);
+		case GL_STACK_OVERFLOW:                return TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT);
+		case GL_STACK_UNDERFLOW:               return TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT);
+		case GL_OUT_OF_MEMORY:                 return TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT);
+		case GL_INVALID_FRAMEBUFFER_OPERATION: return TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT);
+		default: return TCOL (TCOL_NORMAL, TCOL_DEFAULT, TCOL_DEFAULT);
 	}
 }
 
@@ -150,12 +150,12 @@ __attribute__ ((__unused__)) static void gl_check_error
 		fprintf	
 		(
 			stderr,
-			ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT) "GL_CHECK_ERROR" ANSIC_RESET " "
+			TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT) "GL_CHECK_ERROR" TCOL_RESET " "
 			"%04i "
-			ANSIC (ANSIC_BOLD, ANSIC_BLUE, ANSIC_DEFAULT) "%s" ANSIC_RESET ":"
-			ANSIC (ANSIC_BOLD, ANSIC_BLUE, ANSIC_DEFAULT) "%04i" ANSIC_RESET " in "
-			ANSIC (ANSIC_NORMAL, ANSIC_YELLOW , ANSIC_DEFAULT) "%s" ANSIC_RESET " () " 
-			ANSIC (ANSIC_BOLD, ANSIC_RED , ANSIC_DEFAULT) "%s" ANSIC_RESET " (%04i)",
+			TCOL (TCOL_BOLD, TCOL_BLUE, TCOL_DEFAULT) "%s" TCOL_RESET ":"
+			TCOL (TCOL_BOLD, TCOL_BLUE, TCOL_DEFAULT) "%04i" TCOL_RESET " in "
+			TCOL (TCOL_NORMAL, TCOL_YELLOW , TCOL_DEFAULT) "%s" TCOL_RESET " () " 
+			TCOL (TCOL_BOLD, TCOL_RED , TCOL_DEFAULT) "%s" TCOL_RESET " (%04i)",
 			id, 
 			file, 
 			line, 
@@ -177,9 +177,9 @@ void GLAPIENTRY glDebugOutput
 	//ignore non-significant error/warning codes
 	//if(id == 131169 || id == 131185 || id == 131218 || id == 131204) {return;}
 	fprintf (stderr, "%i | ", id);
-	fprintf (stderr, "%s%s" ANSIC_RESET " | ", gl_getcol_source (source), gl_getstr_source (source));
-	fprintf (stderr, "%s%s" ANSIC_RESET " | ", gl_getcol_type (type), gl_getstr_type (type));
-	fprintf (stderr, "%s%s" ANSIC_RESET " | ", gl_getcol_severity (severity), gl_getstr_severity (severity));
+	fprintf (stderr, "%s%s" TCOL_RESET " | ", gl_getcol_source (source), gl_getstr_source (source));
+	fprintf (stderr, "%s%s" TCOL_RESET " | ", gl_getcol_type (type), gl_getstr_type (type));
+	fprintf (stderr, "%s%s" TCOL_RESET " | ", gl_getcol_severity (severity), gl_getstr_severity (severity));
 	fprintf (stderr, "%s", message);
 	fprintf (stderr, "\n");
 	fflush (stderr);

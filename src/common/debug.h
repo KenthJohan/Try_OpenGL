@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "ANSIC.h"
+#include "TCOL.h"
 
 //https://stackoverflow.com/questions/8487986/file-macro-shows-full-path
 #ifdef _WIN32
@@ -26,13 +26,13 @@ static void assert_format (int id, char const * file, int line, char const * fn,
 	fprintf	
 	(
 		stderr,
-		ANSIC (ANSIC_BOLD, ANSIC_RED, ANSIC_DEFAULT) "ASSERT" ANSIC_RESET " "
+		TCOL (TCOL_BOLD, TCOL_RED, TCOL_DEFAULT) "ASSERT" TCOL_RESET " "
 		"%04i "
-		ANSIC (ANSIC_BOLD, ANSIC_BLUE, ANSIC_DEFAULT) "%s" ANSIC_RESET ":"
-		ANSIC (ANSIC_BOLD, ANSIC_BLUE, ANSIC_DEFAULT) "%04i" ANSIC_RESET " in "
-		ANSIC (ANSIC_NORMAL, ANSIC_YELLOW , ANSIC_DEFAULT) "%s" ANSIC_RESET " () " 
-		ANSIC (ANSIC_BOLD, ANSIC_BLACK, ANSIC_RED) "[%s]" ANSIC_RESET " "
-		"[%04i:" ANSIC (ANSIC_BOLD, ANSIC_RED , ANSIC_DEFAULT) "%s" ANSIC_RESET "]:",
+		TCOL (TCOL_BOLD, TCOL_BLUE, TCOL_DEFAULT) "%s" TCOL_RESET ":"
+		TCOL (TCOL_BOLD, TCOL_BLUE, TCOL_DEFAULT) "%04i" TCOL_RESET " in "
+		TCOL (TCOL_NORMAL, TCOL_YELLOW , TCOL_DEFAULT) "%s" TCOL_RESET " () " 
+		TCOL (TCOL_BOLD, TCOL_BLACK, TCOL_RED) "[%s]" TCOL_RESET " "
+		"[%04i:" TCOL (TCOL_BOLD, TCOL_RED , TCOL_DEFAULT) "%s" TCOL_RESET "]:",
 		id, 
 		file, 
 		line, 

@@ -15,13 +15,25 @@ int main (int argc, char *argv[])
 	
 	{
 		printf ("Integer matrix multiplication\n");
-		int a [4*4];
-		int b [4*4];
-		int y [4*4];
+		int a [4*4]; //[matgen] A : int^(4 * 4) column_major
+		int b [4*4]; //[matgen] B : int^(4 * 4) column_major
+		int y [4*4]; //[matgen] Y : int^(4 * 4) column_major
+		/*[matgen]
+		A := |4 5 1 8|
+		     |0 3 6 1|
+		     |3 5 0 9|
+		     |2 4 6 1|
+		*/
 		memcpy (a + 0, (int []){4, 0, 3, 2}, sizeof (int) * 4);
 		memcpy (a + 4, (int []){5, 3, 5, 4}, sizeof (int) * 4);
 		memcpy (a + 8, (int []){1, 6, 0, 6}, sizeof (int) * 4);
 		memcpy (a + 12, (int []){8, 1, 9, 1}, sizeof (int) * 4);
+		/*[matgen]
+		B := |1 5 1 0|
+		     |0 3 6 1|
+		     |3 5 7 2|
+		     |2 0 6 1|
+		*/
 		memcpy (b + 0, (int []){1, 0, 3, 2}, sizeof (int) * 4);
 		memcpy (b + 4, (int []){5, 3, 5, 0}, sizeof (int) * 4);
 		memcpy (b + 8, (int []){1, 6, 7, 6}, sizeof (int) * 4);
@@ -30,7 +42,7 @@ int main (int argc, char *argv[])
 		printf ("*\n");
 		MAT_PRINT3 (MAT_4X4_COLM, b, FMT_INT);
 		printf ("=\n");
-		MAT_MUL4 (MAT_4X4_COLM, y, a, b);
+		MAT_MUL4 (MAT_4X4_COLM, y, a, b); //Y = A * B
 		MAT_PRINT3 (MAT_4X4_COLM, y, FMT_INT);
 		printf ("\n");
 	}

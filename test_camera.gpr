@@ -5,7 +5,7 @@ project Test_Camera is
 	for Exec_Dir use "bin";
 	for Source_Dirs use 
 	(
-		"src/common",
+		"src/common/**",
 		"src/test_camera",
 		"lib/SDL2-2.0.8/x86_64-w64-mingw32/include",
 		"lib/glew-2.1.0/include"

@@ -1,10 +1,6 @@
 #pragma once
 #include <math.h>
 
-#define MIN(a, b) (((a)<(b))?(a):(b))
-#define MAX(a, b) (((a)>(b))?(a):(b))
-#define COUNTE(x) (sizeof(x) / sizeof(*(x)))
-
 
 // Set vector scalar
 // (v := {x | x = s})
@@ -385,7 +381,7 @@ void v4f_normalize (float r [4], float v [4])
 	V4_DOT (sum, v, v);
 	if (sum == 0) return;
 	sum = 1.0f / sqrtf (sum);
-	printf ("s %f\n", sum);
+	//printf ("s %f\n", sum);
 	V4_MUL_SCALAR (r, v, sum);
 }
 

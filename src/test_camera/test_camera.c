@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "global.h"
 #include "debug.h"
 #include "debug_gl.h"
 #include "mat.h"
@@ -10,9 +11,11 @@
 #include "camera.h"
 #include "mesh.h"
 #include "shader.h"
+#include "vertex.h"
+#include "graphics.h"
  
-#define FMT_INT ANSIC (ANSIC_NORMAL, ANSIC_YELLOW, ANSIC_DEFAULT) "%02i " ANSIC_RESET
-#define FMT_FLT ANSIC (ANSIC_NORMAL, ANSIC_CYAN, ANSIC_DEFAULT) "%04.1f " ANSIC_RESET
+#define FMT_INT TCOL (TCOL_NORMAL, TCOL_YELLOW, TCOL_DEFAULT) "%02i " TCOL_RESET
+#define FMT_FLT TCOL (TCOL_NORMAL, TCOL_CYAN, TCOL_DEFAULT) "%04.1f " TCOL_RESET
 #define APP_WINDOW_WIDTH 1024
 #define APP_WINDOW_HEIGHT 768
 #define APP_TITLE "My OpenGL test window"
@@ -63,8 +66,9 @@ int main (int argc, char *argv[])
 	printf ("Using glsl version %s.....\n", glGetString (GL_SHADING_LANGUAGE_VERSION));
 
 	//During init, enable debug output
+	glEnable (GL_DEPTH_TEST);
 	glEnable (GL_DEBUG_OUTPUT);
-    glEnable (GL_DEBUG_OUTPUT_SYNCHRONOUS); 
+	glEnable (GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	//glDebugMessageCallback (MessageCallback, 0);
 	glDebugMessageCallback (glDebugOutput, 0);
 	glDebugMessageControl (GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
@@ -74,7 +78,7 @@ int main (int argc, char *argv[])
 		{0, GL_VERTEX_SHADER, "shader.glvs"},
 		{0, GL_FRAGMENT_SHADER, "shader.glfs"}
 	};
-	program = program_create (shaders, COUNTE (shaders));
+	program = program_create (shaders, COUNTOF (shaders));
 	uniform_mvp = glGetUniformLocation (program, "mvp");
 	ASSERT_F (uniform_mvp >= 0, "glGetUniformLocation no uniform found.");
 
@@ -100,9 +104,17 @@ int main (int argc, char *argv[])
 	struct Vertex grid_data [GRID_COUNT] = {0};
 	gen_grid (grid_data, GRID_COUNT, -10.0f, 10.0f, -10.0f, 10.0f, 1.0f);
 	
+	struct Vertex circle_data [100];
+	gen_circle (circle_data, COUNTOF (circle_data), 2.0f, 1.0f, 1.0f, -2.0f);
+	
+	struct Vertex circle_data1 [100];
+	gen_circle1 (circle_data1, COUNTOF (circle_data1), 2.0f, 1.0f, 1.0f, 3.0f);
+	
 	struct Mesh triangle;
 	struct Mesh square;
 	struct Mesh grid;
+	struct Mesh circle;
+	struct Mesh circle1;
 	
 	triangle.mode = GL_TRIANGLES;
 	triangle.vert_count = 3;
@@ -119,13 +131,24 @@ int main (int argc, char *argv[])
 	grid.vert_data = grid_data;
 	grid.vao = gpu_load_verts (program, grid.vert_data, GRID_COUNT);
 	
-	GLfloat scr_col[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	circle.mode = GL_LINE_LOOP;
+	circle.vert_count = COUNTOF (circle_data);
+	circle.vert_data = circle_data;
+	circle.vao = gpu_load_verts (program, circle.vert_data, COUNTOF (circle_data));
+	
+	circle1.mode = GL_TRIANGLE_FAN;
+	circle1.vert_count = COUNTOF (circle_data1);
+	circle1.vert_data = circle_data1;
+	circle1.vao = gpu_load_verts (program, circle1.vert_data, COUNTOF (circle_data1));
+	
+	
 	const Uint8 * keyboard = SDL_GetKeyboardState (NULL);
 
 
 
 	camera_init (&cam, window);
-	M4_PRINT (cam.mp, FMT_FLT);
+	//M4_PRINT (cam.mp, FMT_FLT);
+	glClearColor (0.0f, 0.0f, 0.1f, 0.0f);
 
 	printf ("main loop:\n");
 	while (1)
@@ -180,8 +203,8 @@ int main (int argc, char *argv[])
 					case SDLK_RIGHT:
 					case SDLK_UP:
 					case SDLK_DOWN:
-					M4_PRINT (cam.mvp, FMT_FLT);
-					printf ("\n");
+					//M4_PRINT (cam.mvp, FMT_FLT);
+					//printf ("\n");
 					break;
 				}
 				break;
@@ -193,13 +216,15 @@ int main (int argc, char *argv[])
 		
 		glUseProgram (program);
 		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, cam.mvp);
-		glClearBufferfv (GL_COLOR, 0, scr_col);
+		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		GL_CHECK_ERROR;
 		
 		
 		mesh_draw (&triangle);
 		mesh_draw (&square);
 		mesh_draw (&grid);
+		mesh_draw (&circle);
+		mesh_draw (&circle1);
 		
 		//printf ("glGetError %i\n", glGetError ());
 		fflush (stdout);

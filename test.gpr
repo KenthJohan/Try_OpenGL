@@ -1,3 +1,5 @@
+-- https://docs.adacore.com/gprbuild-docs/html/gprbuild_ug/gnat_project_manager.html
+
 aggregate project Test is
    for Project_Files use 
    (
