@@ -99,47 +99,73 @@ int main (int argc, char *argv[])
 		[4].pos = { -0.5f,  0.5f, -1.0f, 1.0f }, [4].col = { 0.0f, 1.0f, 0.0f, 1.0f },
 		[5].pos = { -0.5f, -0.5f, -1.0f, 1.0f }, [5].col = { 1.0f, 0.0f, 0.0f, 1.0f }
 	};
+
 	
-	#define GRID_COUNT 84
-	struct Vertex grid_data [GRID_COUNT] = {0};
-	gen_grid (grid_data, GRID_COUNT, -10.0f, 10.0f, -10.0f, 10.0f, 1.0f);
+	struct GR_Object obj [10];
 	
-	struct Vertex circle_data [100];
-	gen_circle (circle_data, COUNTOF (circle_data), 2.0f, 1.0f, 1.0f, -2.0f);
+	obj [0].flags = GR_ALLOCATE | GR_UPDATE_ONCE | GR_DRAW;
+	obj [0].mode = GL_LINE_LOOP;
+	obj [0].program = program;
+	obj [0].vao = vertex_get_vao (program);
+	obj [0].count = 100;
+	obj [0].size8 = obj [0].count * sizeof (struct Vertex);
+	obj [0].offset = 0;
+	obj [0].offset8 = 0;
+	obj [0].data = NULL;
+	obj [0].vbo_flags = GL_DYNAMIC_STORAGE_BIT;
 	
-	struct Vertex circle_data1 [100];
-	gen_circle1 (circle_data1, COUNTOF (circle_data1), 2.0f, 1.0f, 1.0f, 3.0f);
+	obj [1].flags = GR_ALLOCATE | GR_UPDATE_ONCE;
+	obj [1].mode = GL_TRIANGLE_FAN;
+	obj [1].program = program;
+	obj [1].vao = vertex_get_vao (program);
+	obj [1].count = 100;
+	obj [1].size8 = obj [1].count * sizeof (struct Vertex);
+	obj [1].offset = 0;
+	obj [1].offset8 = 0;
+	obj [1].data = NULL;
+	obj [1].vbo_flags = GL_DYNAMIC_STORAGE_BIT;
 	
-	struct Mesh triangle;
-	struct Mesh square;
-	struct Mesh grid;
-	struct Mesh circle;
-	struct Mesh circle1;
+	obj [2].flags = GR_ALLOCATE | GR_UPDATE_ONCE | GR_DRAW;
+	obj [2].mode = GL_LINES;
+	obj [2].program = program;
+	obj [2].vao = vertex_get_vao (program);
+	obj [2].count = 100;
+	obj [2].size8 = obj [2].count * sizeof (struct Vertex);
+	obj [2].offset = 0;
+	obj [2].offset8 = 0;
+	obj [2].data = NULL;
+	obj [2].vbo_flags = GL_DYNAMIC_STORAGE_BIT;
 	
-	triangle.mode = GL_TRIANGLES;
-	triangle.vert_count = 3;
-	triangle.vert_data = tri_data;
-	triangle.vao = gpu_load_verts (program, triangle.vert_data, triangle.vert_count);
+	obj [3].flags = GR_DRAW;
+	obj [3].mode = GL_TRIANGLES;
+	obj [3].program = program;
+	obj [3].vao = vertex_get_vao (program);
+	obj [3].count = COUNTOF (tri_data);
+	obj [3].size8 = obj [3].count * sizeof (struct Vertex);
+	obj [3].offset = 0;
+	obj [3].offset8 = 0;
+	obj [3].data = tri_data;
+	obj [3].vbo_flags = GL_DYNAMIC_STORAGE_BIT;
 	
-	square.mode = GL_TRIANGLES;
-	square.vert_count = 6;
-	square.vert_data = sqr_data;
-	square.vao = gpu_load_verts (program, square.vert_data, square.vert_count);
+	obj [4].flags = GR_DRAW;
+	obj [4].mode = GL_TRIANGLES;
+	obj [4].program = program;
+	obj [4].vao = vertex_get_vao (program);
+	obj [4].count = COUNTOF (sqr_data);
+	obj [4].size8 = obj [4].count * sizeof (struct Vertex);
+	obj [4].offset = 0;
+	obj [4].offset8 = 0;
+	obj [4].data = sqr_data;
+	obj [4].vbo_flags = GL_DYNAMIC_STORAGE_BIT;
 	
-	grid.mode = GL_LINES;
-	grid.vert_count = GRID_COUNT;
-	grid.vert_data = grid_data;
-	grid.vao = gpu_load_verts (program, grid.vert_data, GRID_COUNT);
 	
-	circle.mode = GL_LINE_LOOP;
-	circle.vert_count = COUNTOF (circle_data);
-	circle.vert_data = circle_data;
-	circle.vao = gpu_load_verts (program, circle.vert_data, COUNTOF (circle_data));
+	gr_init (obj, 5);
 	
-	circle1.mode = GL_TRIANGLE_FAN;
-	circle1.vert_count = COUNTOF (circle_data1);
-	circle1.vert_data = circle_data1;
-	circle1.vao = gpu_load_verts (program, circle1.vert_data, COUNTOF (circle_data1));
+	gen_circle (obj [0].data, obj [0].count, 2.0f, 1.0f, 1.0f, -2.0f);
+	gen_circle1 (obj [1].data, obj [1].count, 2.0f, 4.0f, 1.0f, -2.0f);
+	gen_grid (obj [2].data, obj [2].count, -10.0f, 10.0f, -10.0f, 10.0f, 1.0f);
+	
+	gr_update (obj, 5);
 	
 	
 	const Uint8 * keyboard = SDL_GetKeyboardState (NULL);
@@ -219,12 +245,7 @@ int main (int argc, char *argv[])
 		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		GL_CHECK_ERROR;
 		
-		
-		mesh_draw (&triangle);
-		mesh_draw (&square);
-		mesh_draw (&grid);
-		mesh_draw (&circle);
-		mesh_draw (&circle1);
+		gr_draw (obj, 5);
 		
 		//printf ("glGetError %i\n", glGetError ());
 		fflush (stdout);

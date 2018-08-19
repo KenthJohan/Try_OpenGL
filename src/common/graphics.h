@@ -7,39 +7,6 @@
 #include "mat.h"
 #include "debug.h"
 
-GLuint gpu_load_verts (GLuint program, struct Vertex * verts, GLuint count)
-{
-	GLuint vao;
-	glCreateVertexArrays (1, &vao);
-
-	GLuint pos_attrib_loc = glGetAttribLocation (program, "pos");
-	ASSERT_F (pos_attrib_loc >= 0, "glGetAttribLocation no attribute found.");
-	GL_CHECK_ERROR;
-	
-	GLuint col_attrib_loc = glGetAttribLocation (program, "col");
-	ASSERT_F (col_attrib_loc >= 0, "glGetAttribLocation no attribute found.");
-	GL_CHECK_ERROR;
-
-	glVertexArrayAttribFormat (vao, pos_attrib_loc, 4, GL_FLOAT, GL_FALSE, (GLuint)offsetof (struct Vertex, pos));
-	GL_CHECK_ERROR;
-	
-	glVertexArrayAttribFormat (vao, col_attrib_loc, 4, GL_FLOAT, GL_FALSE, (GLuint)offsetof (struct Vertex, col));
-	GL_CHECK_ERROR;
-
-	glVertexArrayAttribBinding (vao, pos_attrib_loc, 0);
-	glVertexArrayAttribBinding (vao, col_attrib_loc, 0);
-
-	glEnableVertexArrayAttrib (vao, pos_attrib_loc);
-	glEnableVertexArrayAttrib (vao, col_attrib_loc);
-
-	GLuint vbo;
-	glCreateBuffers (1, &vbo);
-	glNamedBufferStorage (vbo, sizeof (struct Vertex) * count, verts, 0);
-
-	glVertexArrayVertexBuffer (vao, 0, vbo, 0, sizeof (struct Vertex));
-	return vao;
-}
-
 
 void gen_grid (struct Vertex * verts, size_t count, float x1, float x2, float y1, float y2, float r)
 {
@@ -97,6 +64,7 @@ void gen_circle (struct Vertex * v, size_t n, float r, float x, float y, float z
 	}
 }
 
+
 void gen_circle1 (struct Vertex * v, size_t n, float r, float x, float y, float z)
 {
 	size_t i = 0;
@@ -133,6 +101,117 @@ void sdl_get_mouse (SDL_Window * window)
 	SDL_GetMouseState (&x, &y);
 	//printf ("(%f %f)\n", (float)x/(float)w - 0.5f, (float)y/(float)h - 0.5f);
 }
+
+
+
+//GR_ALLOCATE: Data is dynamic allocated. 
+#define GR_ALLOCATE (1 << 0)
+//GR_UPDATE: Update GPU buffer next call.
+#define GR_UPDATE (1 << 1)
+#define GR_UPDATE_ONCE (1 << 2)
+#define GR_DRAW (1 << 2)
+#define GR_DRAW_ONCE (1 << 3)
+#define GR_FLAG3 (1 << 4)
+
+
+struct GR_Object
+{
+	uint32_t flags;
+	GLuint program;
+	GLuint vao;
+	GLenum mode;
+	GLuint vbo;
+	GLbitfield vbo_flags;
+	GLuint offset8;
+	GLuint offset;
+	size_t count;
+	size_t size8;
+	void * data;
+};
+
+
+//Copy object data to VBO for all objects that has GR_UPDATE flag set.
+void gr_update (struct GR_Object * v, size_t n)
+{
+	LOOP (size_t, i, n)
+	{
+		if (v [i].flags & GR_UPDATE_ONCE)
+		{
+			v [i].flags &= ~GR_UPDATE_ONCE;
+			glNamedBufferSubData (v [i].vbo, v [i].offset8, v [i].size8, v [i].data);
+			GL_CHECK_ERROR;
+		}
+		else if (v [i].flags & GR_UPDATE)
+		{
+			glNamedBufferSubData (v [i].vbo, v [i].offset8, v [i].size8, v [i].data);
+			GL_CHECK_ERROR;
+		}
+	}
+}
+
+
+//Unefficent render loop.
+//Use this for unsorted objects.
+void gr_draw (struct GR_Object * v, size_t n)
+{
+	LOOP (size_t, i, n)
+	{
+		glUseProgram (v [i].program);
+		glBindVertexArray (v [i].vao);
+		glDrawArrays (v [i].mode, v [i].offset, v [i].count);
+		GL_CHECK_ERROR;
+	}
+}
+
+
+void gr_init (struct GR_Object * v, size_t n)
+{
+	LOOP (size_t, i, n)
+	{
+		glCreateBuffers (1, &(v [i].vbo));
+		glNamedBufferStorage (v [i].vbo, v [i].size8, v [i].data, v [i].vbo_flags);
+		glVertexArrayVertexBuffer (v [i].vao, 0, v [i].vbo, 0, sizeof (struct Vertex));
+		GL_CHECK_ERROR;
+		if ((v [i].data == NULL) && (v [i].flags & GR_ALLOCATE)) 
+		{
+			v [i].data = malloc (v [i].size8);
+		}
+	}
+}
+
+
+
+//Get common objects that has common program and vao.
+size_t gr_get_common 
+(
+	struct GR_Object * xv, size_t xn, 
+	struct GR_Object * yv, size_t yn,
+	GLuint program,
+	GLuint vao
+)
+{
+	size_t xi = 0;
+	size_t yi = 0;
+	while (1)
+	{
+		if (xi >= xn) {return yi;}
+		if (yi >= yn) {return yi;}
+		if (xv [xi].program != program) {xi ++; continue;}
+		if (xv [xi].vao != vao) {xi ++; continue;}
+		yv [yi] = xv [xi];
+		xi ++;
+		yi ++;
+	}
+}
+
+
+
+
+
+
+
+
+
 
 
 
