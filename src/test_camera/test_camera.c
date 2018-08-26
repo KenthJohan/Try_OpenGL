@@ -9,7 +9,10 @@
 #include "mat.h"
 #include "misc.h"
 #include "camera.h"
-#include "mesh.h"
+//#include "mesh.h"
+#include "gmesh.h"
+#include "gbuf.h"
+#include "gen.h"
 #include "shader.h"
 #include "vertex.h"
 #include "graphics.h"
@@ -82,90 +85,61 @@ int main (int argc, char *argv[])
 	uniform_mvp = glGetUniformLocation (program, "mvp");
 	ASSERT_F (uniform_mvp >= 0, "glGetUniformLocation no uniform found.");
 
-	
-	struct Vertex tri_data [3] = 
-	{
-		[0].pos = { -0.5f, -0.5f, 0.0f, 1.0f}, [0].col = { 1.0f, 0.0f, 0.0f, 1.0f },
-		[1].pos = {  0.5f, -0.5f, 0.0f, 1.0f}, [1].col = { 0.0f, 1.0f, 0.0f, 1.0f },
-		[2].pos = {  0.0f,  0.5f, 0.0f, 1.0f}, [2].col = { 0.0f, 0.0f, 1.0f, 1.0f }
-	};
 
-	struct Vertex sqr_data [6] = 
-	{
-		[0].pos = { -0.5f, -0.5f, -1.0f, 1.0f }, [0].col = { 1.0f, 0.0f, 0.0f, 1.0f },
-		[1].pos = {  0.5f, -0.5f, -1.0f, 1.0f }, [1].col = { 0.0f, 1.0f, 0.0f, 1.0f },
-		[2].pos = {  0.5f,  0.5f, -1.0f, 1.0f }, [2].col = { 0.0f, 0.0f, 1.0f, 1.0f },
-		[3].pos = {  0.5f,  0.5f, -1.0f, 1.0f }, [3].col = { 0.0f, 0.0f, 1.0f, 1.0f },
-		[4].pos = { -0.5f,  0.5f, -1.0f, 1.0f }, [4].col = { 0.0f, 1.0f, 0.0f, 1.0f },
-		[5].pos = { -0.5f, -0.5f, -1.0f, 1.0f }, [5].col = { 1.0f, 0.0f, 0.0f, 1.0f }
-	};
+
+	struct Vertex * v0 = gbuf_init (6, sizeof (struct Vertex), GBUF_MALLOC, NULL);
+	struct Vertex * v;
+	v = gbuf_add (v0);
+	V4_SET (v->pos, -0.5f, -0.5f, -1.0f, 1.0f);
+	V4_SET (v->col, 1.0f, 0.0f, 0.0f, 1.0f);
+	v = gbuf_add (v0);
+	V4_SET (v->pos,  0.5f, -0.5f, -1.0f, 1.0f);
+	V4_SET (v->col, 0.0f, 1.0f, 0.0f, 1.0f);
+	v = gbuf_add (v0);
+	V4_SET (v->pos,  0.5f,  0.5f, -1.0f, 1.0f);
+	V4_SET (v->col, 0.0f, 0.0f, 1.0f, 1.0f);
+	v = gbuf_add (v0);
+	V4_SET (v->pos,  0.5f,  0.5f, -1.0f, 1.0f);
+	V4_SET (v->col, 0.0f, 0.0f, 1.0f, 1.0f);
+	v = gbuf_add (v0);
+	V4_SET (v->pos, -0.5f,  0.5f, -1.0f, 1.0f);
+	V4_SET (v->col, 0.0f, 1.0f, 0.0f, 1.0f);
+	v = gbuf_add (v0);
+	V4_SET (v->pos, -0.5f, -0.5f, -1.0f, 1.0f);
+	V4_SET (v->col, 1.0f, 0.0f, 0.0f, 1.0f);
+
+	struct Vertex * v1 = gbuf_init (20 * 20 * 2, sizeof (struct Vertex), GBUF_MALLOC, NULL);
+	gen1_grid (v1, -10.0f, 10.0f, -10.0f, 10.0f, 0.1f);
+	
+	
+	struct GMesh * m0 = gbuf_init (2, sizeof (struct GMesh), GBUF_MALLOC, NULL);
+	struct GMesh * m;
+	m = gbuf_add (m0);
+	ASSERT (m != NULL);
+	m->flags = GMESH_DRAW;
+	m->mode = GL_TRIANGLES;
+	m->program = program;
+	m->vao = vertex_get_vao (program);
+	m->draw_offset = 0;
+	m->draw_count = gbuf (v0)->n;
+	m->data = v0;
+	m->vbo_flags = GL_DYNAMIC_STORAGE_BIT;
+	
+	m = gbuf_add (m0);
+	ASSERT (m != NULL);
+	m->flags = GMESH_DRAW;
+	m->mode = GL_LINES;
+	m->program = program;
+	m->vao = vertex_get_vao (program);
+	m->draw_offset = 0;
+	m->draw_count = gbuf (v1)->n;
+	m->data = v1;
+	m->vbo_flags = GL_DYNAMIC_STORAGE_BIT;
 
 	
-	struct GR_Object obj [10];
 	
-	obj [0].flags = GR_ALLOCATE | GR_UPDATE_ONCE | GR_DRAW;
-	obj [0].mode = GL_LINE_LOOP;
-	obj [0].program = program;
-	obj [0].vao = vertex_get_vao (program);
-	obj [0].count = 100;
-	obj [0].size8 = obj [0].count * sizeof (struct Vertex);
-	obj [0].offset = 0;
-	obj [0].offset8 = 0;
-	obj [0].data = NULL;
-	obj [0].vbo_flags = GL_DYNAMIC_STORAGE_BIT;
+	gmesh_init (m0);
 	
-	obj [1].flags = GR_ALLOCATE | GR_UPDATE_ONCE;
-	obj [1].mode = GL_TRIANGLE_FAN;
-	obj [1].program = program;
-	obj [1].vao = vertex_get_vao (program);
-	obj [1].count = 100;
-	obj [1].size8 = obj [1].count * sizeof (struct Vertex);
-	obj [1].offset = 0;
-	obj [1].offset8 = 0;
-	obj [1].data = NULL;
-	obj [1].vbo_flags = GL_DYNAMIC_STORAGE_BIT;
-	
-	obj [2].flags = GR_ALLOCATE | GR_UPDATE_ONCE | GR_DRAW;
-	obj [2].mode = GL_LINES;
-	obj [2].program = program;
-	obj [2].vao = vertex_get_vao (program);
-	obj [2].count = 100;
-	obj [2].size8 = obj [2].count * sizeof (struct Vertex);
-	obj [2].offset = 0;
-	obj [2].offset8 = 0;
-	obj [2].data = NULL;
-	obj [2].vbo_flags = GL_DYNAMIC_STORAGE_BIT;
-	
-	obj [3].flags = GR_DRAW;
-	obj [3].mode = GL_TRIANGLES;
-	obj [3].program = program;
-	obj [3].vao = vertex_get_vao (program);
-	obj [3].count = COUNTOF (tri_data);
-	obj [3].size8 = obj [3].count * sizeof (struct Vertex);
-	obj [3].offset = 0;
-	obj [3].offset8 = 0;
-	obj [3].data = tri_data;
-	obj [3].vbo_flags = GL_DYNAMIC_STORAGE_BIT;
-	
-	obj [4].flags = GR_DRAW;
-	obj [4].mode = GL_TRIANGLES;
-	obj [4].program = program;
-	obj [4].vao = vertex_get_vao (program);
-	obj [4].count = COUNTOF (sqr_data);
-	obj [4].size8 = obj [4].count * sizeof (struct Vertex);
-	obj [4].offset = 0;
-	obj [4].offset8 = 0;
-	obj [4].data = sqr_data;
-	obj [4].vbo_flags = GL_DYNAMIC_STORAGE_BIT;
-	
-	
-	gr_init (obj, 5);
-	
-	gen_circle (obj [0].data, obj [0].count, 2.0f, 1.0f, 1.0f, -2.0f);
-	gen_circle1 (obj [1].data, obj [1].count, 2.0f, 4.0f, 1.0f, -2.0f);
-	gen_grid (obj [2].data, obj [2].count, -10.0f, 10.0f, -10.0f, 10.0f, 1.0f);
-	
-	gr_update (obj, 5);
 	
 	
 	const Uint8 * keyboard = SDL_GetKeyboardState (NULL);
@@ -236,21 +210,16 @@ int main (int argc, char *argv[])
 				break;
 			}
 		}
-		
-		camera_update (&cam, keyboard);
-		
-		
 		glUseProgram (program);
+		camera_update (&cam, keyboard);
 		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, cam.mvp);
 		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		GL_CHECK_ERROR;
 		
-		gr_draw (obj, 5);
+		gmesh_draw (m0);
 		
-		//printf ("glGetError %i\n", glGetError ());
-		fflush (stdout);
 		SDL_Delay (10);
 		SDL_GL_SwapWindow (window);
+		GL_CHECK_ERROR;
 	}
 	
 main_quit:

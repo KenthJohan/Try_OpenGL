@@ -131,19 +131,19 @@ struct GR_Object
 
 
 //Copy object data to VBO for all objects that has GR_UPDATE flag set.
-void gr_update (struct GR_Object * v, size_t n)
+void gr_update (struct GR_Object * v0, size_t n)
 {
-	LOOP (size_t, i, n)
+	for (struct GR_Object * v = v0; v < (v + n); v ++)
 	{
-		if (v [i].flags & GR_UPDATE_ONCE)
+		if (v->flags & GR_UPDATE_ONCE)
 		{
-			v [i].flags &= ~GR_UPDATE_ONCE;
-			glNamedBufferSubData (v [i].vbo, v [i].offset8, v [i].size8, v [i].data);
+			v->flags &= ~GR_UPDATE_ONCE;
+			glNamedBufferSubData (v->vbo, v->offset8, v->size8, v->data);
 			GL_CHECK_ERROR;
 		}
-		else if (v [i].flags & GR_UPDATE)
+		else if (v->flags & GR_UPDATE)
 		{
-			glNamedBufferSubData (v [i].vbo, v [i].offset8, v [i].size8, v [i].data);
+			glNamedBufferSubData (v->vbo, v->offset8, v->size8, v->data);
 			GL_CHECK_ERROR;
 		}
 	}
@@ -152,29 +152,29 @@ void gr_update (struct GR_Object * v, size_t n)
 
 //Unefficent render loop.
 //Use this for unsorted objects.
-void gr_draw (struct GR_Object * v, size_t n)
+void gr_draw (struct GR_Object * v0, size_t n)
 {
-	LOOP (size_t, i, n)
+	for (struct GR_Object * v = v0; v < (v + n); v ++)
 	{
-		glUseProgram (v [i].program);
-		glBindVertexArray (v [i].vao);
-		glDrawArrays (v [i].mode, v [i].offset, v [i].count);
+		glUseProgram (v->program);
+		glBindVertexArray (v->vao);
+		glDrawArrays (v->mode, v->offset, v->count);
 		GL_CHECK_ERROR;
 	}
 }
 
 
-void gr_init (struct GR_Object * v, size_t n)
+void gr_init (struct GR_Object * v0, size_t n)
 {
-	LOOP (size_t, i, n)
+	for (struct GR_Object * v = v0; v < (v + n); v ++)
 	{
-		glCreateBuffers (1, &(v [i].vbo));
-		glNamedBufferStorage (v [i].vbo, v [i].size8, v [i].data, v [i].vbo_flags);
-		glVertexArrayVertexBuffer (v [i].vao, 0, v [i].vbo, 0, sizeof (struct Vertex));
+		glCreateBuffers (1, &(v->vbo));
+		glNamedBufferStorage (v->vbo, v->size8, v->data, v->vbo_flags);
+		glVertexArrayVertexBuffer (v->vao, 0, v->vbo, 0, sizeof (struct Vertex));
 		GL_CHECK_ERROR;
-		if ((v [i].data == NULL) && (v [i].flags & GR_ALLOCATE)) 
+		if ((v->data == NULL) && (v->flags & GR_ALLOCATE)) 
 		{
-			v [i].data = malloc (v [i].size8);
+			v->data = malloc (v->size8);
 		}
 	}
 }
