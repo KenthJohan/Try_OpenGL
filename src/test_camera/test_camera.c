@@ -16,12 +16,48 @@
 #include "shader.h"
 #include "vertex.h"
 #include "graphics.h"
+#include "q.h"
  
 #define FMT_INT TCOL (TCOL_NORMAL, TCOL_YELLOW, TCOL_DEFAULT) "%02i " TCOL_RESET
 #define FMT_FLT TCOL (TCOL_NORMAL, TCOL_CYAN, TCOL_DEFAULT) "%04.1f " TCOL_RESET
 #define APP_WINDOW_WIDTH 1024
 #define APP_WINDOW_HEIGHT 768
 #define APP_TITLE "My OpenGL test window"
+
+
+
+
+
+
+
+
+
+
+void app_create_mesh (struct GMesh * mesh, struct Camera * cam)
+{
+	{
+		struct GMesh * m = gbuf_add (mesh);
+		ASSERT (m != NULL);
+		struct Vertex * grid = gbuf_init (NULL, 20 * 20 * 2, sizeof (struct Vertex), GBUF_MALLOC);
+		gen1_grid (grid, -1.0f, -10.0f, 10.0f, -10.0f, 10.0f, 0.1f);
+		m->flags = GMESH_DRAW;
+		m->mode = GL_LINES;
+		m->data = grid;
+		m->cam = cam;
+		M4_IDENTITY (m->mm);
+		//m->mm [M4_V0 + 0] =  4.0f;
+		//m->mm [M4_V1 + 1] =  4.0f;
+	}
+}
+
+
+
+
+
+
+
+
+
 
 
 
@@ -86,61 +122,9 @@ int main (int argc, char *argv[])
 	ASSERT_F (uniform_mvp >= 0, "glGetUniformLocation no uniform found.");
 
 
-
-	struct Vertex * v0 = gbuf_init (6, sizeof (struct Vertex), GBUF_MALLOC, NULL);
-	struct Vertex * v;
-	v = gbuf_add (v0);
-	V4_SET (v->pos, -0.5f, -0.5f, -1.0f, 1.0f);
-	V4_SET (v->col, 1.0f, 0.0f, 0.0f, 1.0f);
-	v = gbuf_add (v0);
-	V4_SET (v->pos,  0.5f, -0.5f, -1.0f, 1.0f);
-	V4_SET (v->col, 0.0f, 1.0f, 0.0f, 1.0f);
-	v = gbuf_add (v0);
-	V4_SET (v->pos,  0.5f,  0.5f, -1.0f, 1.0f);
-	V4_SET (v->col, 0.0f, 0.0f, 1.0f, 1.0f);
-	v = gbuf_add (v0);
-	V4_SET (v->pos,  0.5f,  0.5f, -1.0f, 1.0f);
-	V4_SET (v->col, 0.0f, 0.0f, 1.0f, 1.0f);
-	v = gbuf_add (v0);
-	V4_SET (v->pos, -0.5f,  0.5f, -1.0f, 1.0f);
-	V4_SET (v->col, 0.0f, 1.0f, 0.0f, 1.0f);
-	v = gbuf_add (v0);
-	V4_SET (v->pos, -0.5f, -0.5f, -1.0f, 1.0f);
-	V4_SET (v->col, 1.0f, 0.0f, 0.0f, 1.0f);
-
-	struct Vertex * v1 = gbuf_init (20 * 20 * 2, sizeof (struct Vertex), GBUF_MALLOC, NULL);
-	gen1_grid (v1, -10.0f, 10.0f, -10.0f, 10.0f, 0.1f);
-	
-	
-	struct GMesh * m0 = gbuf_init (2, sizeof (struct GMesh), GBUF_MALLOC, NULL);
-	struct GMesh * m;
-	m = gbuf_add (m0);
-	ASSERT (m != NULL);
-	m->flags = GMESH_DRAW;
-	m->mode = GL_TRIANGLES;
-	m->program = program;
-	m->vao = vertex_get_vao (program);
-	m->draw_offset = 0;
-	m->draw_count = gbuf (v0)->n;
-	m->data = v0;
-	m->vbo_flags = GL_DYNAMIC_STORAGE_BIT;
-	
-	m = gbuf_add (m0);
-	ASSERT (m != NULL);
-	m->flags = GMESH_DRAW;
-	m->mode = GL_LINES;
-	m->program = program;
-	m->vao = vertex_get_vao (program);
-	m->draw_offset = 0;
-	m->draw_count = gbuf (v1)->n;
-	m->data = v1;
-	m->vbo_flags = GL_DYNAMIC_STORAGE_BIT;
-
-	
-	
-	gmesh_init (m0);
-	
-	
+	struct GMesh * mesh = gbuf_init (NULL, 3, sizeof (struct GMesh), GBUF_MALLOC);
+	app_create_mesh (mesh, &cam);
+	gmesh_init (mesh, program);
 	
 	const Uint8 * keyboard = SDL_GetKeyboardState (NULL);
 
@@ -171,7 +155,7 @@ int main (int argc, char *argv[])
 				
 					case SDL_WINDOWEVENT_RESIZED:
 					//printf ("Window %d resized to %dx%d\n",event.window.windowID, event.window.data1, event.window.data2);
-					gl_update_projection (window, cam.mp);
+					gl_update_projection (window, cam.m_p);
 					break;
 				}
 				break;
@@ -212,11 +196,8 @@ int main (int argc, char *argv[])
 		}
 		glUseProgram (program);
 		camera_update (&cam, keyboard);
-		glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, cam.mvp);
 		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		gmesh_draw (m0);
-		
+		gmesh_draw (mesh, uniform_mvp);
 		SDL_Delay (10);
 		SDL_GL_SwapWindow (window);
 		GL_CHECK_ERROR;

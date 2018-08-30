@@ -254,6 +254,13 @@
 #define M4_V3 12
 #define M4_VT 12
 
+#define M4_S0 0
+#define M4_S1 5
+#define M4_S2 10
+#define M4_S3 15
+
+
+
 
 // Clear vector
 // (v := {x | x = 0})
@@ -384,6 +391,29 @@ void v4f_normalize (float r [4], float v [4])
 	//printf ("s %f\n", sum);
 	V4_MUL_SCALAR (r, v, sum);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

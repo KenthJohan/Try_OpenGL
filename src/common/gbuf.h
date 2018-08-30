@@ -1,64 +1,116 @@
 #pragma once
 
-#include "debug.h"
 #include <stdint.h>
+#include <stdlib.h>
+#include "debug.h"
 
+#define GBUF_MALLOC 1 << 0
+//#define GBUF_RING 1 << 1
 
+/*
+#define GBUF_UNKNOWN 0
+#define GBUF_F32 1
+#define GBUF_F64 2
+#define GBUF_S8 3
+#define GBUF_S16 4
+#define GBUF_S32 5
+#define GBUF_S64 6
+#define GBUF_S128 7
+#define GBUF_U8 3
+#define GBUF_U16 4
+#define GBUF_U32 5
+#define GBUF_U64 6
+#define GBUF_U128 7
+*/
 
-#define GBUF_SIGNATURE 0
-#define GBUF_MALLOC (1 << 0)
+#define GBUF_LOOP(t, i, d) for (t (i) = 0; i < gbuf_count ((d)); (i) = (i) + 1)
+#define GBUF_LOOP_CAPACITY(t, i, d) for (t (i) = 0; i < gbuf_capacity ((d)); (i) = (i) + 1)
 
-#define GBUF_LOOP(t, i, x) for (t (i) = 0; (i) < gbuf ((x))->n; (i) = (i) + 1)
-
-struct GBuffer
+struct GBuf
 {
+	uint32_t count; //Element count
+	uint32_t capacity; //Capacity count
+	uint16_t element_size8; //Element size in 8 bit
 	uint16_t flags;
-	uint32_t cap;
-	uint32_t n;
-	uint16_t esize8;
 };
 
 
-void * gbuf_init (uint32_t cap, uint16_t esize8, uint16_t flags, void * data)
+
+void * gbuf_init (void * data, uint32_t capacity, uint8_t element_size8, uint8_t flags)
 {
-	struct GBuffer * g = data;
-	if ((data == NULL) && (flags & GBUF_MALLOC))
+	TRACE_F ("element_size8 %i", element_size8);
+	struct GBuf * g = data;
+	if ((g == NULL) && (flags & GBUF_MALLOC))
 	{
-		g = malloc (esize8 * cap + sizeof (struct GBuffer));
+		size_t n = capacity * element_size8 + sizeof (struct GBuf);
+		g = malloc (n);
+		ASSERT (g != NULL);
+		//memset (g, 0, n);
 	}
 	ASSERT (g != NULL);
-	g->cap = cap;
-	g->n = 0;
-	g->esize8 = esize8;
+	g->count = 0;
+	g->capacity = capacity;
+	g->element_size8 = element_size8;
 	g->flags = flags;
 	return g + 1;
 }
 
 
-struct GBuffer * gbuf (void * data)
+struct GBuf * gbuf_meta (void * data)
 {
-	struct GBuffer * g = (struct GBuffer *) data;
-	return g - 1;
+	struct GBuf * g = data;
+	g = g - 1;
+	return g;
 }
+
+uint32_t gbuf_count (void * data)
+{
+	struct GBuf * g = gbuf_meta (data);
+	return g->count;
+}
+
+
+uint32_t gbuf_capacity (void * data)
+{
+	struct GBuf * g = gbuf_meta (data);
+	return g->capacity;
+}
+
+uint32_t gbuf_cap8 (void * data)
+{
+	struct GBuf * g = gbuf_meta (data);
+	return g->capacity * g->element_size8;
+}
+
 
 
 void * gbuf_add (void * data)
 {
-	struct GBuffer * g = gbuf (data);
-	if (g->n >= g->cap) {return NULL;}
-	g->n ++;
-	uintptr_t d = (uintptr_t) data;
-	d += (g->n - 1) * g->esize8;
-	return (void *) d;
+	struct GBuf * g = gbuf_meta (data);
+	if (g->count >= g->capacity) {return NULL;}
+	g->count ++;
+	uintptr_t d = (uintptr_t)data + g->element_size8 * (g->count - 1);
+	return (void *)d;
 }
 
 
-void gbuf_free (void * data)
+void * gbuf_get (void * data, size_t index)
 {
-	struct GBuffer * g = gbuf (data);
-	free (g);
+	struct GBuf * g = gbuf_meta (data);
+	if (index >= g->count) {return NULL;}
+	uintptr_t d = (uintptr_t)data + g->element_size8 * index;
+	return (void *)d;
 }
 
 
+/*
+void gbuf_print (struct GBuf * g)
+{
+	for (size_t i = 0; i < n; i ++)
+	{
+		printf ("%f %f\n", x [i].x, x [i].y);
+	}
+}
+* */
 
 

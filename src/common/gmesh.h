@@ -1,13 +1,12 @@
 #pragma once
 
-#include <stdint.h>
-#include <GL/glew.h>
-#include <SDL2/SDL.h>
-#include "debug_gl.h"
+#include <GL/gl.h>
+#include <GL/glext.h>
+#include <GL/glcorearb.h>
+
 #include "vertex.h"
-#include "mat.h"
-#include "debug.h"
 #include "gbuf.h"
+#include "camera.h"
 
 #define GMESH_DRAW (1 << 0)
 #define GMESH_DRAW_ONCE (1 << 1)
@@ -17,29 +16,26 @@
 
 struct GMesh
 {
-	uint32_t flags;
 	GLuint program;
 	GLuint vao;
-	GLenum mode;
 	GLuint vbo;
-	GLbitfield vbo_flags;
-	GLuint draw_offset;
-	GLuint draw_count;
+	uint32_t flags;
+	GLenum mode;
+	struct Camera * cam;
+	float mm [16];
 	void * data;
 };
 
 
-
-void gmesh_init (struct GMesh * m)
+void gmesh_init (struct GMesh * m, GLuint program)
 {
 	GBUF_LOOP (size_t, i, m)
 	{
-		struct GBuffer * g = gbuf (m [i].data);
-		size_t const cap8 = g->cap * g->esize8;
+		if (m [i].flags == 0) {continue;}
 		glCreateVertexArrays (1, &(m [i].vao));
 		GLuint l [2];
-		l [0] = glGetAttribLocation (m [i].program, "pos");
-		l [1] = glGetAttribLocation (m [i].program, "col");
+		l [0] = glGetAttribLocation (program, "pos");
+		l [1] = glGetAttribLocation (program, "col");
 		ASSERT_F (l [0] >= 0, "glGetAttribLocation no attribute found.");
 		ASSERT_F (l [1] >= 0, "glGetAttribLocation no attribute found.");
 		glVertexArrayAttribFormat (m [i].vao, l [0], 4, GL_FLOAT, GL_FALSE, (GLuint)offsetof (struct Vertex, pos));
@@ -49,29 +45,52 @@ void gmesh_init (struct GMesh * m)
 		glEnableVertexArrayAttrib (m [i].vao, l [0]);
 		glEnableVertexArrayAttrib (m [i].vao, l [1]);
 		glCreateBuffers (1, &(m [i].vbo));
-		glNamedBufferStorage (m [i].vbo, cap8, m [i].data, GL_DYNAMIC_STORAGE_BIT);
+		glNamedBufferStorage (m [i].vbo, gbuf_cap8 (m [i].data), m [i].data, GL_DYNAMIC_STORAGE_BIT);
 		glVertexArrayVertexBuffer (m [i].vao, 0, m [i].vbo, 0, sizeof (struct Vertex));
+		TRACE_F ("");
 		GL_CHECK_ERROR;
 	}
 }
 
 
-void gmesh_draw (struct GMesh * m)
+void gmesh_draw (struct GMesh * m, GLuint uniform_mvp)
 {
 	GBUF_LOOP (size_t, i, m)
 	{
-		if (m->flags & GMESH_DRAW)
+		uint32_t n = gbuf_count (m [i].data);
+		//TRACE_F ("%i", n);
+		if (n == 0) {continue;}
+		if (m [i].flags == 0) {continue;}
+		if (m [i].flags & GMESH_DRAW) 
 		{
+			camera_mvp_update (m [i].cam, m [i].mm, uniform_mvp);
 			glBindVertexArray (m [i].vao);
-			glDrawArrays (m [i].mode, m [i].draw_offset, m [i].draw_count);
-			GL_CHECK_ERROR;
+			glDrawArrays (m [i].mode, 0, n);
 		}
-		if (m [i].flags & GMESH_DRAW_ONCE)
+		else if (m [i].flags & GMESH_DRAW_ONCE)
 		{
 			m [i].flags &= ~GMESH_DRAW;
 		}
+		GL_CHECK_ERROR;
 	}
 }
 
 
-
+void mesh_update (struct GMesh * m)
+{
+	GBUF_LOOP (size_t, i, m)
+	{
+		if (m [i].flags == 0) {continue;}
+		GLsizeiptr const size8 = gbuf_count (m);
+		GLintptr const offset8 = 0;
+		if (m [i].flags & GMESH_UPDATE) 
+		{
+			glNamedBufferSubData (m [i].vbo, offset8, size8, m [i].data);
+		}
+		if (m [i].flags & GMESH_UPDATE_ONCE) 
+		{
+			m [i].flags &= ~GMESH_UPDATE;
+		}
+		GL_CHECK_ERROR;
+	}
+}
