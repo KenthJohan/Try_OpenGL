@@ -5,32 +5,9 @@
 #include <GL/glext.h>
 #include <GL/glcorearb.h>
 
-#include "mat.h"
-#include "m.h"
+#include "m4.h"
+#include "v4.h"
 #include "q.h"
-#include "v.h"
-
-struct Camera
-{
-	float m_mvp [4*4]; //Matrix model view projection (mvp). 
-	float m_vp [4*4]; //Matrix view projection (vp). 
-	float m_v [4*4]; //Matrix view (v).
-	float m_vt [4*4]; //Matrix view translation (vt).
-	float m_vr [4*4]; //Matrix view rotation (vr).
-	float m_vrx [4*4]; //Matrix view rotation around x (vrx).
-	float m_vry [4*4]; //Matrix view rotation around y (vry).
-	float m_vrz [4*4]; //Matrix view rotation around z (vrz).
-	float m_p [4*4]; //Matrix projection (p).
-	
-	float ax;
-	float ay;
-	float az;
-	float move_speed;
-	float angle_speed;
-	
-	float q [4];
-	float qm [16];
-};
 
 
 void gl_update_projection (SDL_Window * window, float m [4*4])
@@ -38,37 +15,8 @@ void gl_update_projection (SDL_Window * window, float m [4*4])
 	int w;
 	int h;
 	SDL_GetWindowSize (window, &w, &h);
-	m4f_perspective (m, 45.0f, (float)w/(float)h, 0.01f, 1000.0f);
+	m4f32_perspective (m, 45.0f, (float)w/(float)h, 0.1f, 100.0f, M_COLMAJ);
 	glViewport (0, 0, w, h);
-}
-
-
-void camera_update_projection (struct Camera * cam, SDL_Window * window)
-{
-	gl_update_projection (window, cam->m_p);
-}
-
-
-void camera_init (struct Camera * cam, SDL_Window * window)
-{
-	M4_IDENTITY (cam->m_mvp);
-	M4_IDENTITY (cam->m_vrx);
-	M4_IDENTITY (cam->m_vry);
-	M4_IDENTITY (cam->m_vrz);
-	M4_IDENTITY (cam->m_vt);
-	M4_IDENTITY (cam->m_vp);
-	//M4_IDENTITY (cam->mm);
-	M4_FRUSTUM_INIT (cam->m_p);
-	gl_update_projection (window, cam->m_p);
-	cam->ax = 0.0f;
-	cam->ay = 0.0f;
-	cam->az = 0.0f;
-	cam->move_speed = 0.1f;
-	cam->angle_speed = 0.1f;
-	cam->q [0] = 0.0f;
-	cam->q [1] = 0.0f;
-	cam->q [2] = 0.0f;
-	cam->q [3] = 1.0f;
 }
 
 
@@ -78,7 +26,7 @@ void sdl_get_translation_vector (float t [4], uint8_t const * keyboard)
 	t [1] = (keyboard [SDL_SCANCODE_LCTRL] - keyboard [SDL_SCANCODE_SPACE]);
 	t [2] = (keyboard [SDL_SCANCODE_W] - keyboard [SDL_SCANCODE_S]);
 	t [3] = 0;
-	v4f_normalize (t, t);
+	v4f32_normalize (t, t);
 }
 
 
@@ -88,88 +36,83 @@ void sdl_get_rotation_vector (float a [4], uint8_t const * keyboard)
 	a [1] = (keyboard [SDL_SCANCODE_RIGHT] - keyboard [SDL_SCANCODE_LEFT]);
 	a [2] = (keyboard [SDL_SCANCODE_E] - keyboard [SDL_SCANCODE_Q]);
 	a [3] = 0;
-	v4f_normalize (a, a);
+	v4f32_normalize (a, a);
 }
 
 
-void testing_q (struct Camera * cam, float dt [4])
+struct Cam
 {
-	float q [4];
-	float m [16];
-	qf32_axis_angle (q, dt, 0.1f);
-	qf32_normalize (q, q);
-	fflush (stdout);
-	qf32_mul (q, cam->q, cam->q);
-	qf32_normalize (cam->q, cam->q);
-	qf32_m4 (cam->q, cam->qm, M_COLMAJ);
-	//qf32_print (cam->q, stdout);
-	m4_print (cam->qm, M_COLMAJ, stdout);
+	float p [4]; //Position
+	float q [4]; //Looking direction
+	float P [16]; //Projection matrix
+	float PV [16]; //Projection * View matrix
+};
+
+
+void cam_init (struct Cam * cam, SDL_Window * win)
+{
+	vf32_set_scalar (0, cam->p, 4);
+	m4f32_identity (cam->P);
+	qf32_unit (cam->q);
+	gl_update_projection (win, cam->P);
 }
 
 
-void camera_update (struct Camera * cam, uint8_t const * keyboard)
+void cam_update (struct Cam * cam, uint8_t const * keyboard)
 {
-	float dt [4];
-	sdl_get_translation_vector (dt, keyboard);
-	V4_MUL_SCALAR (dt, dt, cam->move_speed);
+	float v [4]; //Position velocity.
+	float o [4]; //Rotation velocity.
+	float u [4]; //Quaternion velocity.
+	float R [16]; //Rotation matrix
+	float T [16]; //Translation matrix
+	float * p = cam->p;
+	float * P = cam->P;
+	float * PV = cam->PV;
+	float * q = cam->q; //Camera rotation quaternion.
 	
-
+	//### Rotatate camera from user input
+	sdl_get_rotation_vector (o, keyboard);
+	qf32_axis_angle (u, o, 0.01f);
+	qf32_normalize  (u, u);
+	qf32_mul        (u, q, q);
+	qf32_normalize  (q, q);
+	qf32_m4         (q, R, M_COLMAJ);
 	
 	
+	//### Move camera from user input
+	//1. Get the user input (v).
+	//2. Set the velocity speed (v).
+	//3. Convert velocity vector (v) to rotated (R) coordinate system.
+	//4. Move camera position (p) to a new position (p).
+	//5. Convert camera position (p) to a translation matrix (T).
+	//1. v := userinput;
+	//2. v := 0.01 * v
+	//3. v := R^T * v
+	//4. p := p + v;
+	//5. T := convert (t);
+	sdl_get_translation_vector (v, keyboard);
+	v4f32_mul_scalar  (v, 0.01f, v);
+	m4v4f32_mul       (R, v, v, M_COLMAJ | M_TLEFT);
+	v4f32_add         (v, p, p);
+	m4f32_translation (p, T);
 	
-	float da [4];
-	sdl_get_rotation_vector (da, keyboard);
-	V4_MUL_SCALAR (da, da, cam->angle_speed);
-	testing_q (cam, da); //TESTING
-	
-	
-	//TODO: Change this to quaternion instead.
-	cam->ax += da [0];
-	cam->ay += da [1];
-	cam->az += da [2];
-	M4_ROTX (cam->m_vrx, cam->ax);
-	M4_ROTY (cam->m_vry, cam->ay);
-	M4_ROTZ (cam->m_vrz, cam->az);
-	M4_IDENTITY (cam->m_vr);
-	m4f_mul (cam->m_vr, cam->m_vry, cam->m_vr);
-	m4f_mul (cam->m_vr, cam->m_vrx, cam->m_vr);
-	m4f_mul (cam->m_vr, cam->m_vrz, cam->m_vr);
-	
-	//The translation vector is based on user input coordinate system.
-	//Convert the translation vector to the view coordinate system and accumulate the 
-	//result in the translation column of the view translation matrix.
-	//M4_MAC_TRANSPOSE (cam->m_vt + M4_VT, cam->m_vr, dt);
-	M4_MAC_TRANSPOSE (cam->m_vt + M4_VT, cam->qm, dt);
-	
-	/*
-	cam->mt [M4_TX] += t [0] * cam->mr [0];
-	cam->mt [M4_TX] += t [1] * cam->mr [1];
-	cam->mt [M4_TX] += t [2] * cam->mr [2];
-	
-	cam->mt [M4_TZ] += t [0] * cam->mr [8];
-	cam->mt [M4_TZ] += t [1] * cam->mr [9];
-	cam->mt [M4_TZ] += t [2] * cam->mr [10];
-	
-	cam->mt [M4_TY] += t [0] * cam->mr [4];
-	cam->mt [M4_TY] += t [1] * cam->mr [5];
-	cam->mt [M4_TY] += t [2] * cam->mr [6];
-	*/
-
-
-	//Combine view matrix and projection matrix.
-	M4_IDENTITY (cam->m_vp);
-	m4f_mul (cam->m_vp, cam->m_vt, cam->m_vp);
-	//m4f_mul (cam->m_vp, cam->m_vr, cam->m_vp);
-	m4f_mul (cam->m_vp, cam->qm, cam->m_vp);
-	m4f_mul (cam->m_vp, cam->m_p, cam->m_vp);
+	//### Build projection*view matrix.
+	m4f32_identity (PV);
+	m4f32_mul (T, PV, PV, M_COLMAJ); //Apply translation to view matrix
+	m4f32_mul (R, PV, PV, M_COLMAJ); //Apply rotation to view matrix
+	m4f32_mul (P, PV, PV, M_COLMAJ); //Apply projection to view matrix
 }
 
 
-void camera_mvp_update (struct Camera * cam, float mm [16], GLuint uniform_mvp)
+void cam_mvp_update (struct Cam * cam, float M [16], GLuint uniform)
 {
-	//Combine view matrix and model matrix.
-	m4f_mul (cam->m_mvp, cam->m_vp, mm);
-	glUniformMatrix4fv (uniform_mvp, 1, GL_FALSE, cam->m_mvp);
+	float PVM [16]; // ProjecitonMatrix * ViewMatrix * ModelMatrix
+	float * PV = cam->PV;
+	// Apply model matrix to projection*view matrix
+	// PVM := M * PV;
+	m4f32_mul (M, PV, PVM, M_COLMAJ);
+	m4f32_print (PVM, M_COLMAJ, stdout);
+	glUniformMatrix4fv (uniform, 1, GL_FALSE, PVM);
 }
 
 

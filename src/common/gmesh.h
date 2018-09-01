@@ -21,7 +21,7 @@ struct GMesh
 	GLuint vbo;
 	uint32_t flags;
 	GLenum mode;
-	struct Camera * cam;
+	struct Cam * cam;
 	float mm [16];
 	void * data;
 };
@@ -63,7 +63,7 @@ void gmesh_draw (struct GMesh * m, GLuint uniform_mvp)
 		if (m [i].flags == 0) {continue;}
 		if (m [i].flags & GMESH_DRAW) 
 		{
-			camera_mvp_update (m [i].cam, m [i].mm, uniform_mvp);
+			cam_mvp_update (m [i].cam, m [i].mm, uniform_mvp);
 			glBindVertexArray (m [i].vao);
 			glDrawArrays (m [i].mode, 0, n);
 		}

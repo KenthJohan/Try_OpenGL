@@ -6,7 +6,6 @@
 #include "global.h"
 #include "debug.h"
 #include "debug_gl.h"
-#include "mat.h"
 #include "misc.h"
 #include "camera.h"
 //#include "mesh.h"
@@ -15,7 +14,6 @@
 #include "gen.h"
 #include "shader.h"
 #include "vertex.h"
-#include "graphics.h"
 #include "q.h"
  
 #define FMT_INT TCOL (TCOL_NORMAL, TCOL_YELLOW, TCOL_DEFAULT) "%02i " TCOL_RESET
@@ -27,13 +25,23 @@
 
 
 
+void sdl_get_mouse (SDL_Window * window)
+{
+	int w;
+	int h;
+	SDL_GetWindowSize (window, &w, &h);
+	int x;
+	int y;
+	SDL_GetMouseState (&x, &y);
+	//printf ("(%f %f)\n", (float)x/(float)w - 0.5f, (float)y/(float)h - 0.5f);
+}
 
 
 
 
 
 
-void app_create_mesh (struct GMesh * mesh, struct Camera * cam)
+void app_create_mesh (struct GMesh * mesh, struct Cam * cam)
 {
 	{
 		struct GMesh * m = gbuf_add (mesh);
@@ -44,7 +52,7 @@ void app_create_mesh (struct GMesh * mesh, struct Camera * cam)
 		m->mode = GL_LINES;
 		m->data = grid;
 		m->cam = cam;
-		M4_IDENTITY (m->mm);
+		m4f32_identity (m->mm);
 		//m->mm [M4_V0 + 0] =  4.0f;
 		//m->mm [M4_V1 + 1] =  4.0f;
 	}
@@ -82,7 +90,7 @@ int main (int argc, char *argv[])
 	SDL_GLContext context;
 	GLuint program;
 	GLuint uniform_mvp;
-	struct Camera cam;
+	struct Cam cam;
 	
 	window = SDL_CreateWindow 
 	(
@@ -130,7 +138,7 @@ int main (int argc, char *argv[])
 
 
 
-	camera_init (&cam, window);
+	cam_init (&cam, window);
 	//M4_PRINT (cam.mp, FMT_FLT);
 	glClearColor (0.0f, 0.0f, 0.1f, 0.0f);
 
@@ -155,7 +163,7 @@ int main (int argc, char *argv[])
 				
 					case SDL_WINDOWEVENT_RESIZED:
 					//printf ("Window %d resized to %dx%d\n",event.window.windowID, event.window.data1, event.window.data2);
-					gl_update_projection (window, cam.m_p);
+					gl_update_projection (window, cam.P);
 					break;
 				}
 				break;
@@ -195,7 +203,7 @@ int main (int argc, char *argv[])
 			}
 		}
 		glUseProgram (program);
-		camera_update (&cam, keyboard);
+		cam_update (&cam, keyboard);
 		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		gmesh_draw (mesh, uniform_mvp);
 		SDL_Delay (10);

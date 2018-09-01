@@ -1,58 +1,22 @@
 #pragma once
 
-
 #include <stdio.h>
-#include "v.h"
-#include "m.h"
+#include "v4.h"
+#include "m4.h"
 
 
-
-/*
-#define Q_MUL(p, q, r)\
-{\
-	(r) [0] = (p) [3] * (q) [0] + (p) [0] * (q) [3] + (p) [1] * (q) [2] - (p) [2] * (q) [1];\
-	(r) [1] = (p) [3] * (q) [1] - (p) [0] * (q) [2] + (p) [1] * (q) [3] + (p) [2] * (q) [0];\
-	(r) [2] = (p) [3] * (q) [2] + (p) [0] * (q) [1] - (p) [1] * (q) [0] + (p) [2] * (q) [3];\
-	(r) [3] = (p) [3] * (q) [3] - (p) [0] * (q) [0] - (p) [1] * (q) [1] - (p) [2] * (q) [2];\
+void qf32_unit (float q [4])
+{
+	q [0] = 0.0f;
+	q [1] = 0.0f;
+	q [2] = 0.0f;
+	q [3] = 1.0f;
 }
-
-
-#define Q_TO_M4(type, q, m)\
-{\
-	type _n = Q4_MAG2 ((q));\
-	type _s = (_n > (type)0) ? (2 / (type)_n) : (type)0;\
-	type _00 = _s * (q) [0] * (q) [0];\
-	type _01 = _s * (q) [0] * (q) [1];\
-	type _02 = _s * (q) [0] * (q) [2];\
-	type _03 = _s * (q) [0] * (q) [3];\
-	type _11 = _s * (q) [1] * (q) [1];\
-	type _12 = _s * (q) [1] * (q) [2];\
-	type _13 = _s * (q) [1] * (q) [3];\
-	type _22 = _s * (q) [2] * (q) [2];\
-	type _23 = _s * (q) [2] * (q) [3];\
-	(m) [M4_S0] = (type)1 - (_11 + _22);\
-	(m) [M4_S1] = (type)1 - (_00 + _22);\
-	(m) [M4_S2] = (type)1 - (_00 + _11);\
-	(m) [M4_V0 + 1] = _01 + _23;\
-	(m) [M4_V1 + 0] = _01 - _23;\
-	(m) [M4_V0 + 2] = _02 - _13;\
-	(m) [M4_V2 + 0] = _02 + _13;\
-	(m) [M4_V1 + 2] = _12 + _03;\
-	(m) [M4_V2 + 1] = _12 - _03;\
-	(m) [M4_V0 + 3] = 0;\
-	(m) [M4_V1 + 3] = 0;\
-	(m) [M4_V2 + 3] = 0;\
-	(m) [M4_T0] = 0;\
-	(m) [M4_T1] = 0;\
-	(m) [M4_T2] = 0;\
-	(m) [M4_T3] = 0;\
-}
-*/
 
 
 float qf32_norm2 (float q [4])
 {
-	return vf32_norm2 (q, 4);
+	return v4f32_norm2 (q);
 }
 
 
@@ -64,7 +28,7 @@ float qf32_norm (float const q [4])
 
 void qf32_normalize (float const q [4], float r [4])
 {
-	vf32_normalize (q, r, 4);
+	v4f32_normalize (q, r);
 }
 
 
@@ -87,7 +51,6 @@ void qf32_mul (float p [4], float q [4], float r [4])
 	(r) [2] = (p) [3] * (q) [2] + (p) [0] * (q) [1] - (p) [1] * (q) [0] + (p) [2] * (q) [3];
 	(r) [3] = (p) [3] * (q) [3] - (p) [0] * (q) [0] - (p) [1] * (q) [1] - (p) [2] * (q) [2];
 }
-
 
 
 void qf32_m4 (float const q [4], float m [16], int flags)
@@ -149,9 +112,6 @@ void qf32_m4 (float const q [4], float m [16], int flags)
 }
 
 
-
-
-
 void qf32_print (float q [4], FILE * f)
 {
 	for (size_t i = 0; i < 4; ++ i)
@@ -160,15 +120,6 @@ void qf32_print (float q [4], FILE * f)
 	}
 	fprintf (f, "\n");
 }
-
-
-
-
-
-
-
-
-
 
 
 
