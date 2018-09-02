@@ -17,10 +17,10 @@ void gen1_grid
 	float x2, 
 	float y1, 
 	float y2, 
-	float r
+	float r,
+	float cc [4]
 )
 {
-	float cc [4] = {0.2, 0.2, 0.2, 1.0};
 	float x = x1;
 	float y = y1;
 	while (1)

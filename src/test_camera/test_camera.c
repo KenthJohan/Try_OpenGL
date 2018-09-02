@@ -8,12 +8,12 @@
 #include "debug_gl.h"
 #include "misc.h"
 #include "camera.h"
-//#include "mesh.h"
 #include "gmesh.h"
 #include "gbuf.h"
 #include "gen.h"
 #include "shader.h"
 #include "vertex.h"
+#include "app.h"
 #include "q.h"
  
 #define FMT_INT TCOL (TCOL_NORMAL, TCOL_YELLOW, TCOL_DEFAULT) "%02i " TCOL_RESET
@@ -37,6 +37,33 @@ void sdl_get_mouse (SDL_Window * window)
 }
 
 
+void sdl_get_rotation_vector (float a [4], uint8_t const * keyboard)
+{
+	a [0] = (keyboard [SDL_SCANCODE_DOWN] - keyboard [SDL_SCANCODE_UP]);
+	a [1] = (keyboard [SDL_SCANCODE_RIGHT] - keyboard [SDL_SCANCODE_LEFT]);
+	a [2] = (keyboard [SDL_SCANCODE_E] - keyboard [SDL_SCANCODE_Q]);
+	a [3] = 0.01f;
+}
+
+
+void sdl_get_translation_vector (float t [4], uint8_t const * keyboard)
+{
+	t [0] = (keyboard [SDL_SCANCODE_A] - keyboard [SDL_SCANCODE_D]);
+	t [1] = (keyboard [SDL_SCANCODE_LCTRL] - keyboard [SDL_SCANCODE_SPACE]);
+	t [2] = (keyboard [SDL_SCANCODE_W] - keyboard [SDL_SCANCODE_S]);
+	t [3] = 0.01f;
+}
+
+
+void sdl_get_mouse2 (SDL_Event * e, float a [4])
+{
+	a [0] = e->motion.yrel;
+	a [1] = e->motion.xrel;
+	a [2] = 0;
+	a [3] = 0.01f;
+	printf ("(%f %f)\n", (float)e->motion.xrel, (float)e->motion.yrel);
+	fflush (stdout);
+}
 
 
 
@@ -47,14 +74,30 @@ void app_create_mesh (struct GMesh * mesh, struct Cam * cam)
 		struct GMesh * m = gbuf_add (mesh);
 		ASSERT (m != NULL);
 		struct Vertex * grid = gbuf_init (NULL, 20 * 20 * 2, sizeof (struct Vertex), GBUF_MALLOC);
-		gen1_grid (grid, -1.0f, -10.0f, 10.0f, -10.0f, 10.0f, 0.1f);
+		float cc [4] = {0.4, 0.2, 0.2, 1.0};
+		gen1_grid (grid, 0.0f, -10.0f, 10.0f, -10.0f, 10.0f, 0.1f, cc);
 		m->flags = GMESH_DRAW;
 		m->mode = GL_LINES;
 		m->data = grid;
 		m->cam = cam;
 		m4f32_identity (m->mm);
-		//m->mm [M4_V0 + 0] =  4.0f;
-		//m->mm [M4_V1 + 1] =  4.0f;
+	}
+	
+	{
+		struct GMesh * m = gbuf_add (mesh);
+		ASSERT (m != NULL);
+		struct Vertex * grid = gbuf_init (NULL, 20 * 20 * 2, sizeof (struct Vertex), GBUF_MALLOC);
+		float cc [4] = {0.2, 0.4, 0.2, 1.0};
+		gen1_grid (grid, 0.0f, -10.0f, 10.0f, -10.0f, 10.0f, 0.1f, cc);
+		m->flags = GMESH_DRAW;
+		m->mode = GL_LINES;
+		m->data = grid;
+		m->cam = cam;
+		m4f32_identity (m->mm);
+		float q [4] = {0.0f, 1.0f, 0.0f, M_PI * 2.0f * 0.1f};
+		qf32_axis_angle (q, q);
+		qf32_normalize (q, q);
+		qf32_m4 (q, m->mm, M_COLMAJ);
 	}
 }
 
@@ -73,6 +116,9 @@ void app_create_mesh (struct GMesh * mesh, struct Cam * cam)
 
 int main (int argc, char *argv[])
 {
+	struct Application app;
+	app.flags = 0;
+	
 	ASSERT_F (argc == 1, "No arg allowed");
 	ASSERT_F (argv != NULL, "NULL error");
 	
@@ -146,6 +192,10 @@ int main (int argc, char *argv[])
 	while (1)
 	{
 		
+		sdl_get_rotation_vector (cam.q1, keyboard);
+		sdl_get_translation_vector (cam.p1, keyboard);
+		
+		
 		SDL_Event event;
 		while (SDL_PollEvent (&event))
 		{
@@ -169,7 +219,11 @@ int main (int argc, char *argv[])
 				break;
 				
 				case SDL_MOUSEMOTION:
-				sdl_get_mouse (window);
+				//sdl_get_mouse (window);
+				if (app.flags & APP_RELATIVE_MOUSE_MODE)
+				{
+					sdl_get_mouse2 (&event, cam.q1);
+				}
 				break;
 
 
@@ -183,11 +237,8 @@ int main (int argc, char *argv[])
 					break;
 					
 					case SDLK_r:
-					//CLR_V (4*4, mvp);
-					case SDLK_a:
-					case SDLK_d:
-					case SDLK_w:
-					case SDLK_s:
+					app.flags ^= APP_RELATIVE_MOUSE_MODE;
+					break;
 
 					case SDLK_SPACE:
 					case SDLK_LCTRL:
@@ -199,14 +250,17 @@ int main (int argc, char *argv[])
 					//printf ("\n");
 					break;
 				}
+				
+				app_update (&app);
 				break;
 			}
 		}
 		glUseProgram (program);
+
 		cam_update (&cam, keyboard);
 		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		gmesh_draw (mesh, uniform_mvp);
-		SDL_Delay (10);
+		SDL_Delay (1);
 		SDL_GL_SwapWindow (window);
 		GL_CHECK_ERROR;
 	}

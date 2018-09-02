@@ -20,29 +20,17 @@ void gl_update_projection (SDL_Window * window, float m [4*4])
 }
 
 
-void sdl_get_translation_vector (float t [4], uint8_t const * keyboard)
-{
-	t [0] = (keyboard [SDL_SCANCODE_A] - keyboard [SDL_SCANCODE_D]);
-	t [1] = (keyboard [SDL_SCANCODE_LCTRL] - keyboard [SDL_SCANCODE_SPACE]);
-	t [2] = (keyboard [SDL_SCANCODE_W] - keyboard [SDL_SCANCODE_S]);
-	t [3] = 0;
-	v4f32_normalize (t, t);
-}
 
 
-void sdl_get_rotation_vector (float a [4], uint8_t const * keyboard)
-{
-	a [0] = (keyboard [SDL_SCANCODE_DOWN] - keyboard [SDL_SCANCODE_UP]);
-	a [1] = (keyboard [SDL_SCANCODE_RIGHT] - keyboard [SDL_SCANCODE_LEFT]);
-	a [2] = (keyboard [SDL_SCANCODE_E] - keyboard [SDL_SCANCODE_Q]);
-	a [3] = 0;
-	v4f32_normalize (a, a);
-}
+
+
 
 
 struct Cam
 {
+	float p1 [4]; //Position
 	float p [4]; //Position
+	float q1 [4]; //
 	float q [4]; //Looking direction
 	float P [16]; //Projection matrix
 	float PV [16]; //Projection * View matrix
@@ -60,43 +48,52 @@ void cam_init (struct Cam * cam, SDL_Window * win)
 
 void cam_update (struct Cam * cam, uint8_t const * keyboard)
 {
-	float v [4]; //Position velocity.
-	float o [4]; //Rotation velocity.
-	float u [4]; //Quaternion velocity.
-	float R [16]; //Rotation matrix
-	float T [16]; //Translation matrix
+	//### Positional components.
+	//Position velocity (p1) is used for moving the camera.
+	//Position absolute (p) is used for position the camera.
+	float * p1 = cam->p1;
 	float * p = cam->p;
-	float * P = cam->P;
+	
+	//### Rotational components.
+	//Quaternion velocity (q1) is used for rotate the camera.
+	//Quaternion absolute (q) is used for angle the camera.
+	float * q1 = cam->q1;
+	float * q = cam->q;
+	
+	//### Transformational components.
+	//Translation matrix (T).
+	//Rotation matrix (R).
+	//Camera projection (P).
+	//Camera perspective view (PV).
+	float T [16];
+	float R [16];
+	float * P = cam->P; 
 	float * PV = cam->PV;
-	float * q = cam->q; //Camera rotation quaternion.
 	
 	//### Rotatate camera from user input
-	sdl_get_rotation_vector (o, keyboard);
-	qf32_axis_angle (u, o, 0.01f);
-	qf32_normalize  (u, u);
-	qf32_mul        (u, q, q);
+	//sdl_get_rotation_vector (q1, keyboard);
+	qf32_axis_angle (q1, q1);
+	qf32_normalize  (q1, q1);
+	qf32_mul        (q1, q, q);
 	qf32_normalize  (q, q);
 	qf32_m4         (q, R, M_COLMAJ);
 	
-	
 	//### Move camera from user input
-	//1. Get the user input (v).
-	//2. Set the velocity speed (v).
-	//3. Convert velocity vector (v) to rotated (R) coordinate system.
+	//2. Set the velocity speed (p1).
+	//3. Convert velocity vector (p1) to rotated (R) coordinate system.
 	//4. Move camera position (p) to a new position (p).
 	//5. Convert camera position (p) to a translation matrix (T).
-	//1. v := userinput;
 	//2. v := 0.01 * v
 	//3. v := R^T * v
 	//4. p := p + v;
 	//5. T := convert (t);
-	sdl_get_translation_vector (v, keyboard);
-	v4f32_mul_scalar  (v, 0.01f, v);
-	m4v4f32_mul       (R, v, v, M_COLMAJ | M_TLEFT);
-	v4f32_add         (v, p, p);
+	v4f32_normalize   (p1, p1);
+	vf32_mul_scalar   (p1, p1 [3], p1, 3);
+	m4v4f32_mul       (R, p1, p1, M_COLMAJ | M_TLEFT);
+	v4f32_add         (p1, p, p);
 	m4f32_translation (p, T);
 	
-	//### Build projection*view matrix.
+	//### Build PV matrix.
 	m4f32_identity (PV);
 	m4f32_mul (T, PV, PV, M_COLMAJ); //Apply translation to view matrix
 	m4f32_mul (R, PV, PV, M_COLMAJ); //Apply rotation to view matrix
@@ -109,9 +106,9 @@ void cam_mvp_update (struct Cam * cam, float M [16], GLuint uniform)
 	float PVM [16]; // ProjecitonMatrix * ViewMatrix * ModelMatrix
 	float * PV = cam->PV;
 	// Apply model matrix to projection*view matrix
-	// PVM := M * PV;
-	m4f32_mul (M, PV, PVM, M_COLMAJ);
-	m4f32_print (PVM, M_COLMAJ, stdout);
+	// PVM := PV * M;
+	m4f32_mul (PV, M, PVM, M_COLMAJ);
+	//m4f32_print (PVM, M_COLMAJ, stdout);
 	glUniformMatrix4fv (uniform, 1, GL_FALSE, PVM);
 }
 

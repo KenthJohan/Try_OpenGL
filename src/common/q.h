@@ -32,14 +32,14 @@ void qf32_normalize (float const q [4], float r [4])
 }
 
 
-void qf32_axis_angle (float q [4], float const axis [3], float const angle)
+void qf32_axis_angle (float const v [4], float q [4])
 {
-	float const a = angle * 0.5f;
+	float const a = v [3] * 0.5f;
 	float const c = cosf (a);
 	float const s = sinf (a);
-	q [0] = s * axis [0];
-	q [1] = s * axis [1];
-	q [2] = s * axis [2];
+	q [0] = s * v [0];
+	q [1] = s * v [1];
+	q [2] = s * v [2];
 	q [3] = c;
 }
 
