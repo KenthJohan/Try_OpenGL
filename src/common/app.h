@@ -3,6 +3,18 @@
 #include <SDL2/SDL.h>
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 #define APP_RELATIVE_MOUSE_MODE 1 << 0
 
 struct Application
