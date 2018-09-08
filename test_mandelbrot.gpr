@@ -1,6 +1,6 @@
 with "sdl.gpr";
 
-project Test_Camera is
+project Test_Mandelbrot is
 
 	for Languages use ("C");
 	for Object_Dir use "obj";
@@ -8,12 +8,13 @@ project Test_Camera is
 	for Source_Dirs use SDL'Source_Dirs & 
 	(
 		"../csc/**",
-		"src/test_camera"
+		"src/test_mandelbrot"
 	);
 	
 	Main_Files :=
 	(
-		"test_camera.c"
+		"test_mandelbrot_cpu.c",
+		"test_mandelbrot_gpu.c"
 	);
 	
 	for Main use Main_Files;
@@ -35,4 +36,4 @@ project Test_Camera is
 	end Linker;
 
 
-end Test_Camera;
+end Test_Mandelbrot;
