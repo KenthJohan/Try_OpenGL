@@ -6,127 +6,25 @@
 #include "global.h"
 #include "debug.h"
 #include "debug_gl.h"
-#include "misc.h"
-#include "gen.h"
 #include "shader.h"
-#include "vertex.h"
 #include "app.h"
-#include "q.h"
-#include "poi.h"
+#include "v.h"
+#include "v2.h"
 #include "map.h"
+#include "gui.h"
 
 
-/*
-struct Vertex_Info
+struct Vertex
 {
-	char * name;
-	GLuint location;
-	GLuint dim;
-	GLenum type;
-	GLboolean normalized;
-	GLsizei stride;
-	size_t offset;
-};
-
-
-void vinfo_print (struct Vertex_Info * x)
-{
-	printf ("%20s | ", x->name);
-	printf ("%4i | ", (int)x->location);
-	printf ("%4i | ", (int)x->dim);
-	printf ("%4i | ", (int)x->type);
-	printf ("%4i | ", (int)x->normalized);
-	printf ("%4i | ", (int)x->stride);
-	printf ("%4i", (int)x->offset);
-	printf ("\n");
-	fflush (stdout);
-}
-
-
-
-void show_structure ()
-{
-	struct Vertex_Info v;
-	v.name = "Position";
-	v.location = 0;
-	v.dim = 4;
-	v.type = GL_FLOAT;
-	v.normalized = GL_FALSE;
-	v.stride = sizeof (float) * 4;
-	v.offset = 0;
-	vinfo_print (&v);
-}
-*/
-
-#define GUI_RECTANGLE 1
-#define GUI_FLOAT 2
-
-struct GUI_Type1
-{
-	uint8_t flags;
-	uint8_t type;
-	uint8_t dim;
-	uint8_t shape;
-	float * v;
-	float * hit;
-};
-
-
-
-
-// v : ((SW, NE), (SW, NE), ...)
-// r : ((SW, NE), (SW, NE), ...)
-void intersect2d (float r [], float v [], size_t n, float x [2])
-{
-	size_t dim = 2;
-	for (size_t i = 0; i < n; i = i + 1)
-	{
-		float * sw = v + i * (dim + 0);
-		float * ne = v + i * (dim + 1);
-		r [i] = vf32_lt_all (x, sw, dim) && vf32_lt_all (x, ne, dim);
-	}
-}
-
-
-void gui1_hit_test (struct GUI_Type1 * g)
-{
-	float * v;
-	size_t vn = 10;
-	float * r;
 	float p [2];
-	size_t pn = 2;
-	vf32_sub1 (r, v, vn, p, pn);
-}
+	float c [4];
+};
 
 
-
-
-
-
-
-
-GLuint setup_verts ()
+GLuint setup_verts (struct Vertex v [], size_t vn, unsigned int e [], size_t en)
 {
-	struct Vertex
-	{
-		float p [2];
-		float c [4];
-	};
-	
-	struct Vertex vertices [] =
-	{
-		{{ 0.5f,  0.5f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-		{{ 0.5f, -0.5f}, {1.0f, 1.0f, 0.0f, 1.0f}},
-		{{-0.5f, -0.5f}, {0.0f, 1.0f, 1.0f, 1.0f}},
-		{{-0.5f,  0.5f}, {0.5f, 0.0f, 0.5f, 1.0f}}
-	};
-	
-	unsigned int indices [] = 
-	{
-		0, 1, 3, // first triangle
-		1, 2, 3  // second triangle
-	};
-	
+	size_t const v8 = vn * sizeof (struct Vertex);
+	size_t const e8 = en * sizeof (unsigned int);
 	GLuint vao;
 	GLuint vbo;
 	GLuint ebo;
@@ -135,16 +33,104 @@ GLuint setup_verts ()
 	glGenBuffers (1, &ebo);
 	glBindVertexArray (vao);
 	glBindBuffer (GL_ARRAY_BUFFER, vbo);
-	glBufferData (GL_ARRAY_BUFFER, sizeof (vertices), vertices, GL_STATIC_DRAW);
+	glBufferData (GL_ARRAY_BUFFER, v8, v, GL_STATIC_DRAW);
 	glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData (GL_ELEMENT_ARRAY_BUFFER, sizeof (indices), indices, GL_STATIC_DRAW);
+	glBufferData (GL_ELEMENT_ARRAY_BUFFER, e8, e, GL_STATIC_DRAW);
 	glVertexAttribPointer (0, 2, GL_FLOAT, GL_FALSE, sizeof (struct Vertex), (void*)0);
 	glEnableVertexAttribArray (0);
 	glVertexAttribPointer (1, 4, GL_FLOAT, GL_FALSE, sizeof (struct Vertex), (void*) (2 * sizeof (float)));
 	glEnableVertexAttribArray (1);
-	
 	return vao;
 }
+
+
+void convert (struct Vertex v [], size_t vn, struct Rectangle_SWNE * x, size_t xn)
+{
+	srand(0);
+	size_t j = 0;
+	for (size_t i = 0; i < xn; ++ i)
+	{
+		vf32_cpy (v [j].p, (float *)&x [i].ne, 2);
+		vf32_random (v [j].c, 3);
+		v [j].c [3] = 1.0f;
+		j ++;
+		Rectangle_SWNE_SE ((struct v2f32_xy *)v [j].p, x + i);
+		vf32_random (v [j].c, 3);
+		v [j].c [3] = 1.0f;
+		j ++;
+		vf32_cpy (v [j].p, (float *)&x [i].sw, 2);
+		vf32_random (v [j].c, 3);
+		v [j].c [3] = 1.0f;
+		j ++;
+		Rectangle_SWNE_NW ((struct v2f32_xy *)v [j].p, x + i);
+		vf32_random (v [j].c, 3);
+		v [j].c [3] = 1.0f;
+		j ++;
+	}
+}
+
+
+
+GLuint test2 ()
+{	
+	struct Rectangle_SWNE x [2] =
+	{
+		{{0.0f, 0.0f},{0.1f, 0.1f}},
+		{{0.2f, 0.0f},{0.3f, 0.1f}}
+	};
+	
+	struct Vertex v [8];
+	convert (v, 8, x, 2);
+	
+	unsigned int e [] = 
+	{
+		0, 1, 3, // first triangle
+		1, 2, 3, // second triangle
+		
+		4+0, 4+1, 4+3, // first triangle
+		4+1, 4+2, 4+3  // second triangle
+	};
+	
+	for (size_t i = 0; i < 8; ++ i)
+	{
+		printf ("%f %f : %f %f %f %f\n", v [i].p [0], v [i].p [1], v [i].c [0], v [i].c [1], v [i].c [2], v [i].c [3]);
+	}
+	fflush (stdout);
+	
+	return setup_verts (v, 8, e, 12);
+}
+
+
+
+
+
+
+
+
+
+GLuint test1 ()
+{
+	struct Vertex v [] =
+	{
+		{{ 0.5f,  0.5f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+		{{ 0.5f, -0.5f}, {1.0f, 1.0f, 0.0f, 1.0f}},
+		{{-0.5f, -0.5f}, {0.0f, 1.0f, 1.0f, 1.0f}},
+		{{-0.5f,  0.5f}, {0.5f, 0.0f, 0.5f, 1.0f}}
+	};
+	
+	unsigned int e [] = 
+	{
+		0, 1, 3, // first triangle
+		1, 2, 3  // second triangle
+	};
+	
+	return setup_verts (v, 4, e, 6);
+}
+
+
+
+
+
 
 
 
@@ -164,7 +150,8 @@ int main (int argc, char *argv[])
 	struct Application app;
 	app_init (&app, argc, argv);
 	
-	GLuint vao = setup_verts ();
+	GLuint vao1 = test1 ();
+	GLuint vao2 = test2 ();
 
 	
 	while (1)
@@ -178,9 +165,10 @@ int main (int argc, char *argv[])
 			app_handle_input (&app);
 		}
 		
-        glBindVertexArray (vao);
-        glDrawElements (GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
+		glBindVertexArray (vao1);
+		glDrawElements (GL_LINES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray (vao2);
+		glDrawElements (GL_LINES, 12, GL_UNSIGNED_INT, 0);
 		app_frame_end (&app);
 	}
 
