@@ -1,8 +1,5 @@
 #include "app.h"
 
-
-
-
 GLuint setup_verts (struct GUI_Vertex const v [], size_t vn, unsigned int const e [], size_t en)
 {
 	size_t const v8 = vn * sizeof (struct GUI_Vertex);
@@ -23,44 +20,6 @@ GLuint setup_verts (struct GUI_Vertex const v [], size_t vn, unsigned int const 
 	glVertexAttribPointer (1, 4, GL_FLOAT, GL_FALSE, sizeof (struct GUI_Vertex), (void*) (2 * sizeof (float)));
 	glEnableVertexAttribArray (1);
 	return vao;
-}
-
-
-
-
-
-
-
-
-struct GUI_RectangleSWNE const boxset1 [2] =
-{
-	{{0.0f, 0.0f},{0.1f, 0.1f}},
-	{{0.2f, 0.2f},{0.3f, 0.3f}}
-};
-
-
-
-GLuint mesh_create_test2 ()
-{	
-	struct GUI_RectangleSWNE const * x = boxset1;
-	size_t const xn = 2;
-	
-	struct GUI_Vertex v [8];
-	size_t const vn = 8;
-	
-	struct GUI_RectangleElements e [2];
-	size_t const en = 2;
-	
-	gui_create_vertex_from_rectangle (v, vn, x, xn);
-	gui_create_elements_from_rectangle (e, en);
-	
-	for (size_t i = 0; i < 8; ++ i)
-	{
-		printf ("%f %f : %f %f %f %f\n", v [i].p [0], v [i].p [1], v [i].c [0], v [i].c [1], v [i].c [2], v [i].c [3]);
-	}
-	fflush (stdout);
-	
-	return setup_verts (v, 8, (unsigned int *)e, 12);
 }
 
 
@@ -85,16 +44,12 @@ GLuint mesh_create_test1 ()
 
 
 
-
-
-
 int main (int argc, char *argv[])
 {
 	struct Application app;
 	app_init (&app, argc, argv);
 	
 	GLuint vao1 = mesh_create_test1 ();
-	GLuint vao2 = mesh_create_test2 ();
 
 	
 	while (1)
@@ -109,21 +64,19 @@ int main (int argc, char *argv[])
 			switch (app.event.type)
 			{
 				case SDL_MOUSEBUTTONDOWN:
-				gui_hit (app.window, &app.event.button, boxset1, 2);
 				break;
 			}
 		}
 		
 		glBindVertexArray (vao1);
 		glDrawElements (GL_LINES, 6, GL_UNSIGNED_INT, 0);
-		glBindVertexArray (vao2);
-		glDrawElements (GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 		app_frame_end (&app);
 	}
 
 	app_destroy (&app);
 	return 0;
 }
+
 
 
 
