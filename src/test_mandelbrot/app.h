@@ -1,9 +1,22 @@
 #pragma once
 
-#include <SDL2/SDL.h>
+#include "SDLGL.h"
+
+#include <stdio.h>
+#include <unistd.h>
+
+
+#include "global.h"
 #include "debug.h"
 #include "debug_gl.h"
+#include "misc.h"
+#include "camera.h"
+#include "shader.h"
 #include "ui.h"
+
+#include "q.h"
+#include "poi.h"
+#include "map.h"
 
 
 //Soft application exit
@@ -50,18 +63,6 @@ struct Application
 	//Can be used for checking if app should exit, etc.
 	uint32_t flags;
 	
-	struct Cam cam;
-	
-	//How much camera should move.
-	float cam_p1 [4];
-	
-	//How much camera should rotate as axis angle.
-	//Should be used for smoothing the camera.
-	float cam_a1 [4];
-	
-	//How much camera should rotate as quaternion.
-	float cam_q1 [4];
-	
 	//Frame stopwatch for calculating (dt).
 	float t;
 	
@@ -74,8 +75,6 @@ struct Application
 	
 	SDL_Window * window;
 	SDL_GLContext context;
-	GLuint program;
-	GLuint uniform_mvp;
 };
 
 
@@ -120,18 +119,9 @@ void app_init (struct Application * app, int argc, char * argv [])
 	glEnable (GL_DEBUG_OUTPUT);
 	glEnable (GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	//glDebugMessageCallback (MessageCallback, 0);
-	
-	
-
-	
 	//glDebugMessageCallback (glDebugOutput, 0);
 	//glDebugMessageControl (GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 	app->keyboard = SDL_GetKeyboardState (NULL);
-	
-
-	
-	qf32_unit (app->cam_q1);
-	v4f32_set (app->cam_a1, 0);
 	
 	app->window = SDL_CreateWindow 
 	(
@@ -144,35 +134,10 @@ void app_init (struct Application * app, int argc, char * argv [])
 	);
 	ASSERT_F (app->window != NULL, "SDL_CreateWindow: %s", SDL_GetError());
 	
-	app->context = SDL_GL_CreateContext (app->window);
-	ASSERT_F (app->context != NULL, "SDL_GL_CreateContext: %s", SDL_GetError());
-	
-	{
-		glewExperimental = GL_TRUE;
-		GLenum err = glewInit ();
-		ASSERT (err == GLEW_OK);
-	}
+	app->context = SDL_GL_CreateContext_CC (app->window);
 	
 	printf ("Using opengl version %s....\n", glGetString (GL_VERSION));
 	printf ("Using glsl version %s.....\n", glGetString (GL_SHADING_LANGUAGE_VERSION));
-	
-	
-	struct Shader shaders [2] = 
-	{
-		{0, GL_VERTEX_SHADER, "src/test_mandelbrot/shader.glvs"},
-		{0, GL_FRAGMENT_SHADER, "src/test_mandelbrot/shader.glfs"}
-	};
-	app->program = program_create ("SimpleShaderProgram1", shaders, COUNTOF (shaders));
-	glUseProgram (app->program);
-
-	app->uniform_mvp = glGetUniformLocation (app->program, "mvp");
-	ASSERT_F (app->uniform_mvp >= 0, "glGetUniformLocation no uniform found.");
-	
-	cam_init (&app->cam, app->window);
-	
-
-	glClearColor (0.0f, 0.0f, 0.1f, 0.0f);
-	glPointSize (4.0f);
 }
 
 
@@ -183,34 +148,14 @@ void app_frame_begin (struct Application * app)
 {
 	float const ms = 1.0f/1000.0f;
 	app->t = (float)SDL_GetTicks () * ms;
-	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear (GL_COLOR_BUFFER_BIT);
 }
 
-
-void app_update_camera (struct Application * app)
-{
-	sdl_get_translation_vector (app->cam_p1, app->keyboard);
-	if (!(app->flags & APP_RELATIVE_MOUSE_MODE))
-	{
-		sdl_get_rotation_vector (app->cam_q1, app->keyboard);
-	}
-	cam_update (&app->cam, app->cam_p1, app->cam_q1);
-	qf32_unit (app->cam_q1);
-	float mm [16];
-	m4f32_identity (mm);
-	cam_mvp_update (&app->cam, mm, app->uniform_mvp);
-}
 
 void app_frame_end (struct Application * app)
 {
 	SDL_GL_SwapWindow (app->window);	
 	SDL_Delay (1);
-	
-	if (glGetGraphicsResetStatus() != GL_NO_ERROR)
-	{
-		app->flags |= APP_OPENGL_ERROR;
-	}
-	
 	float const ms = 1.0f/1000.0f;
 	app->dt = ((float)SDL_GetTicks () * ms) - app->t;
 }
@@ -229,10 +174,17 @@ void app_handle_keydown (struct Application * app)
 		break;
 		
 		case SDLK_r:
-		app->flags ^= APP_RELATIVE_MOUSE_MODE;
-		SDL_SetRelativeMouseMode (app->flags & APP_RELATIVE_MOUSE_MODE);
 		break;
 	}
+}
+
+
+void app_update_window_size (struct Application * app)
+{
+	int w;
+	int h;
+	SDL_GetWindowSize (app->window, &w, &h);
+	glViewport (0, 0, w, h);
 }
 
 
@@ -250,10 +202,6 @@ void app_handle_input (struct Application * app)
 		break;
 
 		case SDL_MOUSEMOTION:
-		if (app->flags & APP_RELATIVE_MOUSE_MODE)
-		{
-			ui_mouse_quaternion (&e.motion, app->cam_q1);
-		}
 		break;
 		
 		case SDL_WINDOWEVENT:
@@ -264,8 +212,7 @@ void app_handle_input (struct Application * app)
 			break;
 		
 			case SDL_WINDOWEVENT_RESIZED:
-			//printf ("Window %d resized to %dx%d\n",event.window.windowID, event.window.data1, event.window.data2);
-			gl_update_projection (app->window, app->cam.P);
+			app_update_window_size (app);
 			break;
 		}
 		break;

@@ -13,8 +13,9 @@ project Test_Mandelbrot is
 	
 	Main_Files :=
 	(
-		"test_mandelbrot_cpu.c",
-		"test_mandelbrot_gpu.c"
+		--"test_mandelbrot_cpu.c",
+		--"test_mandelbrot_gpu.c",
+		"test_mandelbrot_gpu2.c"
 	);
 	
 	for Main use Main_Files;

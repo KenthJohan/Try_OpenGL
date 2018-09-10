@@ -25,7 +25,7 @@ abstract project SDL is
 		case Target is
 		
 		when "UNIX" =>
-			for Linker_Options use ("-lGL", "-lSDL2");
+			for Linker_Options use ("-lSDL2", "-lGL", "-lm");
 			
 		when "Windows_NT" =>
 			for Linker_Options use 
@@ -54,7 +54,9 @@ abstract project SDL is
 				"-Llib/glew-2.1.0/lib/Release/x64",
 				"-lglew32",
 				"-lopengl32",
-				"-lglu32"
+				"-lglu32",
+				
+				"-lm"
 			);
 			--for Driver use "C:/Program Files/mingw-w64/x86_64-7.3.0-posix-seh-rt_v5-rev0/mingw64/bin/gcc";
 			

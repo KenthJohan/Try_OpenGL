@@ -1,10 +1,21 @@
 #pragma once
 
-#include <SDL2/SDL.h>
+
+#include "SDLGL.h"
+#include <stdio.h>
+#include <unistd.h>
+
 #include "debug.h"
 #include "debug_gl.h"
 #include "ui.h"
-
+#include "global.h"
+#include "debug.h"
+#include "debug_gl.h"
+#include "shader.h"
+#include "v.h"
+#include "v2.h"
+#include "map.h"
+#include "gui.h"
 
 //Soft application exit
 #define APP_QUIT 1 << 0
@@ -74,14 +85,8 @@ void app_init (struct Application * app, int argc, char * argv [])
 	);
 	ASSERT_F (app->window != NULL, "SDL_CreateWindow: %s", SDL_GetError());
 	
-	app->context = SDL_GL_CreateContext (app->window);
-	ASSERT_F (app->context != NULL, "SDL_GL_CreateContext: %s", SDL_GetError());
-	
-	{
-		glewExperimental = GL_TRUE;
-		GLenum err = glewInit ();
-		ASSERT (err == GLEW_OK);
-	}
+	app->context = SDL_GL_CreateContext_CC (app->window);
+
 	
 	//glEnable (GL_DEPTH_TEST);
 	glEnable (GL_DEBUG_OUTPUT);

@@ -1,20 +1,10 @@
-#include <GL/glew.h>
-#include <SDL2/SDL.h>
-#include <stdio.h>
-#include <unistd.h>
 
-#include "global.h"
-#include "debug.h"
-#include "debug_gl.h"
-#include "misc.h"
-#include "camera.h"
-#include "gen.h"
-#include "shader.h"
-#include "vertex.h"
+
 #include "app.h"
-#include "q.h"
-#include "poi.h"
-#include "map.h"
+
+
+
+
 
 
 
@@ -70,6 +60,15 @@ int main (int argc, char *argv[])
 {
 	struct Application app;
 	app_init (&app, argc, argv);
+	
+	
+	struct Shader shaders [2] = 
+	{
+		{0, GL_VERTEX_SHADER, "src/test_mandelbrot/shader.glvs"},
+		{0, GL_FRAGMENT_SHADER, "src/test_mandelbrot/shader.glfs"}
+	};
+	GLuint program = program_create ("SimpleShaderProgram1", shaders, COUNTOF (shaders));
+	glUseProgram (program);
 	
 	GLuint vao = setup_verts ();
 	GLuint u_max = glGetUniformLocation (app.program, "maxu");

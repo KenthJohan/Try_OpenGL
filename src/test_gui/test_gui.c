@@ -1,17 +1,6 @@
-#include <GL/glew.h>
-#include <SDL2/SDL.h>
-#include <stdio.h>
-#include <unistd.h>
-
-#include "global.h"
-#include "debug.h"
-#include "debug_gl.h"
-#include "shader.h"
 #include "app.h"
-#include "v.h"
-#include "v2.h"
-#include "map.h"
-#include "gui.h"
+
+
 
 
 struct Vertex
@@ -44,9 +33,10 @@ GLuint setup_verts (struct Vertex v [], size_t vn, unsigned int e [], size_t en)
 }
 
 
-void convert (struct Vertex v [], size_t vn, struct Rectangle_SWNE * x, size_t xn)
+void convert 
+(struct Vertex v [], size_t vn, struct Rectangle_SWNE const x [], size_t xn)
 {
-	srand(0);
+	srand (0);
 	size_t j = 0;
 	for (size_t i = 0; i < xn; ++ i)
 	{

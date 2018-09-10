@@ -1,22 +1,4 @@
-#include <GL/glew.h>
-#include <SDL2/SDL.h>
-#include <stdio.h>
-#include <unistd.h>
-
-#include "global.h"
-#include "debug.h"
-#include "debug_gl.h"
-#include "misc.h"
-#include "camera.h"
-#include "gen.h"
-#include "shader.h"
-#include "vertex.h"
 #include "app.h"
-#include "q.h"
-#include "poi.h"
-#include "map.h"
-
-
 
 
 void setup_texture (GLuint tex, size_t w, size_t h)
