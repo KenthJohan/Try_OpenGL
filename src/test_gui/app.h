@@ -232,7 +232,6 @@ void app_handle_input (struct Application * app)
 		break;
 		
 		case SDL_MOUSEBUTTONDOWN:
-		printf ("Mouse button down\n");
 		break;
 	}
 }
