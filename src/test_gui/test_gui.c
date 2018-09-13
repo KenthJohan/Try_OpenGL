@@ -11,20 +11,20 @@ int main (int argc, char *argv[])
 	gui_init (&gui, 3);
 	
 	float y = -0.3f;
-	gui.rectangles [0].sw = (struct v2f32_xy){-1.0f, y};
-	gui.rectangles [0].ne = (struct v2f32_xy){0.0f, 1.0f};
-	
-	gui.rectangles [1].sw = (struct v2f32_xy){0.0f, y};
-	gui.rectangles [1].ne = (struct v2f32_xy){1.0f, 1.0f};
-	
-	gui.rectangles [2].sw = (struct v2f32_xy){-1.0f, -1.0f};
-	gui.rectangles [2].ne = (struct v2f32_xy){1.0f, -0.4f};
+	gui.rectangles [0] = GUI_RectangleSWNE (-1.0f,     y, 0.0f,  1.0f);
+	gui.rectangles [1] = GUI_RectangleSWNE ( 0.0f,     y, 1.0f,  1.0f);
+	gui.rectangles [2] = GUI_RectangleSWNE (-1.0f, -1.0f, 1.0f, -0.4f);
 	
 	gui_sync (&gui);
 
-	GLint uniform_color = glGetUniformLocation (app.program, "objectColor");
+	GLint uniform_color = glGetUniformLocation (app.program, "u1");
+	ASSERT (uniform_color >= 0);
 
-	
+	GLuint tex [1];
+	glGenTextures (COUNTOF (tex), tex);
+	setup_texture3d (tex [0], 400, 400);
+	glActiveTexture (GL_TEXTURE0);
+        
 	while (1)
 	{
 		if (app.flags & APP_QUIT) {break;}
@@ -59,7 +59,9 @@ int main (int argc, char *argv[])
 				break;
 			}
 		}
-	
+		
+        //glActiveTexture (GL_TEXTURE0);
+        //glBindTexture (GL_TEXTURE_2D, tex [0]);
 		gui_draw (&gui, uniform_color);
 		
 		app_frame_end (&app);

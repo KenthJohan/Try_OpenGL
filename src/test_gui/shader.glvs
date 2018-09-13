@@ -2,14 +2,17 @@
 
 layout (location = 0) in vec2 position;
 layout (location = 1) in vec4 color;
+layout (location = 2) in vec2 aTexCoord;
 
-uniform vec4 objectColor;
+
 
 out vec4 color1;
+out vec2 TexCoord;
 
 void main()
 {
 	gl_Position = vec4 (position, 0.0f, 1.0);
-	color1 = color + objectColor;
+	color1 = color;
+	TexCoord = vec2 (aTexCoord.x, aTexCoord.y);
 }
 
