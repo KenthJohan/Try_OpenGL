@@ -30,7 +30,7 @@ project Test_CSC is
 	end Compiler;
 
 	package Linker is
-		for Switches ("C") use SDLGL.Linker'Switches ("C");
+		for Switches ("C") use SDLGL.Linker'Linker_Options;
 	end Linker;
 
 
