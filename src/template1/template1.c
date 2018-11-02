@@ -2,6 +2,9 @@
 #include <unistd.h>
 #include <assert.h>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H  
+
 //Common simple c functions
 #include "SDLGL.h"
 #include "debug.h"
@@ -45,7 +48,6 @@ void gen_square (float v [48], float x, float y, float w, float h)
 	};
 	memcpy (v, v0, sizeof (v0));
 }
-
 
 
 void gen_grid (uint32_t n, float v [])
@@ -153,6 +155,70 @@ void setup_texture ()
 }
 
 
+void setup_font (FT_Face face)
+{
+	GLuint texture;
+	GLsizei const width = 50;
+	GLsizei const height = 50;
+	GLsizei const layerCount = 128;
+	GLsizei const mipLevelCount = 1;
+	GLenum const internalformat = GL_R8;
+	glGenTextures (1,&texture);
+	glBindTexture (GL_TEXTURE_2D_ARRAY,texture);
+	glTexStorage3D (GL_TEXTURE_2D_ARRAY, mipLevelCount, GL_R8, width, height, layerCount);
+	GL_CHECK_ERROR;
+	
+	//IMPORTANT. Disable byte-alignment restriction.
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	
+	for (GLubyte c = 0; c < 128; c++)
+	{
+		{
+			int r = FT_Load_Char (face, c, FT_LOAD_RENDER);
+			ASSERT_F (r == 0, "ERROR::FREETYTPE: Failed to load Glyph %i", r);
+			if (r) {continue;}
+		}
+		
+		GLint xoffset = 0;
+		GLint yoffset = 0;
+		GLint zoffset = c;
+		
+		TRACE_F ("glyph %i %i", face->glyph->bitmap.width, face->glyph->bitmap.rows);
+		
+		glTexSubImage3D 
+		(
+			GL_TEXTURE_2D_ARRAY, 
+			0, 
+			xoffset, 
+			yoffset, 
+			zoffset, 
+			face->glyph->bitmap.width,
+			face->glyph->bitmap.rows,
+			1, 
+			GL_RED,
+			GL_UNSIGNED_BYTE, 
+			face->glyph->bitmap.buffer
+		);
+		GL_CHECK_ERROR;
+	}
+	
+	// Always set reasonable texture parameters
+	glTexParameteri (GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri (GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri (GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+	glTexParameteri (GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 int main (int argc, char *argv[])
@@ -164,6 +230,17 @@ int main (int argc, char *argv[])
 	SDL_GLContext glcontext;
 	const Uint8 * keyboard;
 	SDL_Event event;
+	FT_Library ft;
+	FT_Face face;
+	{
+		int r = FT_Init_FreeType (&ft);
+		ASSERT_F (r == 0, "ERROR::FREETYPE: Could not init FreeType Library %i", r);
+	}
+	{
+		int r = FT_New_Face(ft, "fonts/arial.ttf", 0, &face);
+		ASSERT_F (r == 0, "ERROR::FREETYPE: Failed to load font %i", r);
+	}
+	FT_Set_Pixel_Sizes (face, 0, 50);
 	
 	window = app_create_window ();
 	
@@ -192,9 +269,10 @@ int main (int argc, char *argv[])
 	
 	setup (vbo, 12);
 	update_square (vbo [0], 0, 0.0f, 0.0f, 0.4f, 0.4f);
-	update_layer (vbo [1], 0, 0);
-	
-	setup_texture ();
+	update_layer (vbo [1], 0, 'X');
+	update_layer (vbo [1], 1, 'W');
+	//setup_texture ();
+	setup_font (face);
 
 
 	while (1)

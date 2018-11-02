@@ -8,7 +8,8 @@ project Template1 is
 	for Source_Dirs use SDLGL'Source_Dirs & 
 	(
 		"../csc/**",
-		"src/template1"
+		"src/template1",
+		"C:/include/freetype2"
 	);
 	
 	Main_Files :=
@@ -30,7 +31,9 @@ project Template1 is
 	end Compiler;
 
 	package Linker is
-		for Switches ("C") use SDLGL.Linker'Linker_Options;
+		for Switches ("C") use 
+		SDLGL.Linker'Linker_Options &
+		("-LC:/lib", "-lfreetype", "-lzlib", "-lbz2");
 	end Linker;
 
 
