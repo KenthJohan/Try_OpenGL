@@ -26,43 +26,8 @@ uint32_t map [] =
 };
 
 
-struct v4f64_xyuv
-{
-	float x;
-	float y;
-	float u;
-	float v;
-};
 
 
-void gen_square (float v [48], float x, float y, float w, float h)
-{
-	float v0 [] =
-	{
-		x,     y + h,   0.0, 0.0,            
-		x,     y,       0.0, 1.0,
-		x + w, y,       1.0, 1.0,
-		x,     y + h,   0.0, 0.0,
-		x + w, y,       1.0, 1.0,
-		x + w, y + h,   1.0, 0.0       
-	};
-	memcpy (v, v0, sizeof (v0));
-}
-
-
-void gen_grid (uint32_t n, float v [])
-{
-	float x = 0.0f;
-	float y = 0.0f;
-	float w = 0.1f;
-	float h = 0.1f;
-	for (uint32_t i = 0; i < n; i += 4*6)
-	{
-		gen_square (v + i, x, y, w, h);
-		x += 0.1f;
-		y += 0.1f;
-	}
-}
 
 
 void update_square (GLuint vbo, uint32_t index, float x, float y, float w, float h)
@@ -90,82 +55,23 @@ void update_layer (GLuint vbo, uint32_t index, uint32_t layer)
 }
 
 
-void setup (GLuint vbo [], uint32_t n)
-{
-	GLenum target = GL_ARRAY_BUFFER;
-	GLenum type = GL_FLOAT;
-	GLboolean normalized = GL_FALSE;
-	const GLvoid * pointer = 0;
-	GLsizei stride0 = sizeof (float) * 4;
-	GLsizei stride1 = sizeof (float) * 1;
-	GLuint index0 = 0;
-	GLuint index1 = 1;
-	GLint size0 = 4;
-	GLint size1 = 1;
-	glGenBuffers (2, vbo);
-	
-	glBindBuffer (target, vbo [0]);
-	glBufferData (target, stride0 * n, NULL, GL_STATIC_DRAW);
-	glEnableVertexAttribArray (index0);
-	glVertexAttribPointer (index0, size0, type, normalized, stride0, pointer);
-	
-	glBindBuffer (target, vbo [1]);
-	glBufferData (target, stride1 * n, NULL, GL_STATIC_DRAW);
-	glEnableVertexAttribArray (index1);
-	glVertexAttribPointer (index1, size1, type, normalized, stride1, pointer);
-}
 
 
-void setup_texture ()
-{
-	GLuint texture;
-	GLsizei const width = 2;
-	GLsizei const height = 2;
-	GLsizei const layerCount = 2;
-	GLsizei const mipLevelCount = 1;
-	// Read you texels here. In the current example, we have 2*2*2 = 8 texels, with each texel being 4 GLubytes.
-	GLubyte texels[32] = 
-	{
-		 // Texels for first image.
-		 0,   0,   0,   255,
-		 255, 0,   0,   255,
-		 0,   255, 0,   255,
-		 0,   0,   255, 255,
-		 // Texels for second image.
-		 255, 255, 255, 255,
-		 255, 255,   0, 255,
-		 0,   255, 255, 255,
-		 255, 0,   255, 255,
-	};
-	glGenTextures (1,&texture);
-	glBindTexture (GL_TEXTURE_2D_ARRAY,texture);
-	// Allocate the storage.
-	glTexStorage3D (GL_TEXTURE_2D_ARRAY, mipLevelCount, GL_RGBA8, width, height, layerCount);
-	// Upload pixel data.
-	// The first 0 refers to the mipmap level (level 0, since there's only 1)
-	// The following 2 zeroes refers to the x and y offsets in case you only want to specify a subrectangle.
-	// The final 0 refers to the layer index offset (we start from index 0 and have 2 levels).
-	// Altogether you can specify a 3D box subset of the overall texture, but only one mip level at a time.
-	glTexSubImage3D (GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, layerCount, GL_RGBA, GL_UNSIGNED_BYTE, texels);
-	// Always set reasonable texture parameters
-	glTexParameteri (GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri (GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri (GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
-	glTexParameteri (GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-}
+
 
 
 void setup_font (FT_Face face)
 {
 	GLuint texture;
+	GLenum const target = GL_TEXTURE_2D_ARRAY;
 	GLsizei const width = 50;
 	GLsizei const height = 50;
 	GLsizei const layerCount = 128;
 	GLsizei const mipLevelCount = 1;
 	GLenum const internalformat = GL_R8;
-	glGenTextures (1,&texture);
-	glBindTexture (GL_TEXTURE_2D_ARRAY,texture);
-	glTexStorage3D (GL_TEXTURE_2D_ARRAY, mipLevelCount, GL_R8, width, height, layerCount);
+	glGenTextures (1, &texture);
+	glBindTexture (target, texture);
+	glTexStorage3D (target, mipLevelCount, internalformat, width, height, layerCount);
 	GL_CHECK_ERROR;
 	
 	//IMPORTANT. Disable byte-alignment restriction.
@@ -187,7 +93,7 @@ void setup_font (FT_Face face)
 		
 		glTexSubImage3D 
 		(
-			GL_TEXTURE_2D_ARRAY, 
+			target, 
 			0, 
 			xoffset, 
 			yoffset, 
@@ -203,16 +109,62 @@ void setup_font (FT_Face face)
 	}
 	
 	// Always set reasonable texture parameters
-	glTexParameteri (GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri (GL_TEXTURE_2D_ARRAY,GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri (GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
-	glTexParameteri (GL_TEXTURE_2D_ARRAY,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+	glTexParameteri (target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri (target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri (target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri (target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
 
 
 
-
+void update_text 
+(
+	GLuint vbo [2], 
+	uint32_t vfirst, 
+	uint32_t * vcount, 
+	uint32_t vcapacity, 
+	char const * text,
+	float x, 
+	float y
+)
+{
+	uint32_t const vdim0 = 4;
+	uint32_t const vdim1 = 1;
+	uint32_t const vsize0 = sizeof (float) * vdim0;
+	uint32_t const vsize1 = sizeof (float) * vdim1;
+	GLenum const target = GL_ARRAY_BUFFER;
+	GLbitfield const access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	GLintptr const offset0 = vfirst * vsize0;
+	GLintptr const offset1 = vfirst * vsize1;
+	GLsizeiptr const length0 = vcapacity * vsize0;
+	GLsizeiptr const length1 = vcapacity * vsize1;
+	float w = 0.1f;
+	float h = 0.1f;
+	
+	glBindBuffer (target, vbo [0]);
+	float * p = glMapBufferRange (target, offset0, length0, access);
+	GL_CHECK_ERROR;
+	glBindBuffer (target, vbo [1]);
+	float * l = glMapBufferRange (target, offset1, length1, access);
+	char const * c = text;
+	uint32_t vi;
+	for (vi = 0; vi < vcapacity; vi += 6)
+	{
+		if ((*c) == '\0') {break;}
+		gen_square (p + (vdim0 * vi), x, y, w, h);
+		gen_layer (l + (vdim1 * vi), (float)(*c));
+		x += w;
+		c ++;
+	}
+	(*vcount) = vi;
+	
+	glBindBuffer (target, vbo [0]);
+	glUnmapBuffer (target);
+	glBindBuffer (target, vbo [1]);
+	glUnmapBuffer (target);
+	GL_CHECK_ERROR;
+}
 
 
 
@@ -255,6 +207,8 @@ int main (int argc, char *argv[])
 	//glEnable (GL_DEPTH_TEST);
 	glEnable (GL_DEBUG_OUTPUT);
 	glEnable (GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glEnable (GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glClearColor (0.1f, 0.1f, 0.2f, 0.0f);
 	glPointSize (4.0f);
 
@@ -262,17 +216,53 @@ int main (int argc, char *argv[])
 	gl_shader_debug1 (program);
 	glUseProgram (program);
 	
+	
+	#define DRAWGROUP_COUNT 10
+	struct
+	{
+		uint32_t first [DRAWGROUP_COUNT];
+		uint32_t count [DRAWGROUP_COUNT];
+		uint32_t capacity [DRAWGROUP_COUNT];
+	} drawdata;
+	vu32_set1 (DRAWGROUP_COUNT, drawdata.first, 0);
+	vu32_set1 (DRAWGROUP_COUNT, drawdata.count, 0);
+	vu32_set1 (DRAWGROUP_COUNT, drawdata.capacity, 0);
+	vu32_setl (drawdata.capacity, DRAWGROUP_COUNT, 100, 0, 0, 0, 0, 0, 24, 0, 0, 0);
+	gen_buffer_slots (DRAWGROUP_COUNT, drawdata.first, drawdata.capacity);
+	
+	
 	GLuint vao;
 	GLuint vbo [2];
 	glGenVertexArrays (1, &vao);
 	glBindVertexArray (vao);
 	
-	setup (vbo, 12);
-	update_square (vbo [0], 0, 0.0f, 0.0f, 0.4f, 0.4f);
-	update_layer (vbo [1], 0, 'X');
-	update_layer (vbo [1], 1, 'W');
-	//setup_texture ();
+	gpu_setup_vertex (vbo, drawdata.first [DRAWGROUP_COUNT-1]);
 	setup_font (face);
+
+	update_text 
+	(
+		vbo, 
+		drawdata.first [0], 
+		drawdata.count + 0, 
+		drawdata.capacity [0], 
+		"Hello",
+		0.0f,
+		0.0f
+	);
+	
+	update_text 
+	(
+		vbo, 
+		drawdata.first [6], 
+		drawdata.count + 6, 
+		drawdata.capacity [6], 
+		"XYZÅÄÖ",
+		0.0f,
+		0.5f
+	);
+
+
+
 
 
 	while (1)
@@ -306,9 +296,15 @@ int main (int argc, char *argv[])
 			}
 		}
 		
+		
+		
 		glClearColor (0.2f, 0.3f, 0.3f, 1.0f);
 		glClear (GL_COLOR_BUFFER_BIT);
-		glDrawArrays (GL_TRIANGLES, 0, 12);
+		
+		app_draw (DRAWGROUP_COUNT, drawdata.first, drawdata.count);
+		//glDrawArrays (GL_TRIANGLES, 0, 5*6);
+		//glDrawArrays (GL_POINTS, 0, 12);
+		//glDrawArrays (GL_LINES, 0, 6*100);
 
 		
 		SDL_GL_SwapWindow (window);	

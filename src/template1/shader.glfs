@@ -9,5 +9,5 @@ void main()
 	vec3 tp = texpos;
 	//tp.z = 'H';
 	vec4 sampled = texture (tex, tp);
-	color = vec4 (1.0, 1.0, 1.0, 1.0) * sampled;
+	color = vec4 (1.0, sampled.r, 1.0, 1.0);
 }  

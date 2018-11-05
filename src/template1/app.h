@@ -98,3 +98,141 @@ SDL_Window * app_create_window ()
 
 
 
+
+void gen_square (float v [48], float x, float y, float w, float h)
+{
+	float v0 [] =
+	{
+		x,     y + h,   0.0, 0.0,            
+		x,     y,       0.0, 1.0,
+		x + w, y,       1.0, 1.0,
+		x,     y + h,   0.0, 0.0,
+		x + w, y,       1.0, 1.0,
+		x + w, y + h,   1.0, 0.0       
+	};
+	memcpy (v, v0, sizeof (v0));
+}
+
+
+void gen_layer (float v [6], float l)
+{
+	float v0 [] = {l, l, l, l, l, l};
+	memcpy (v, v0, sizeof (v0));
+}
+
+
+void gen_grid (uint32_t n, float v [])
+{
+	float x = 0.0f;
+	float y = 0.0f;
+	float w = 0.1f;
+	float h = 0.1f;
+	for (uint32_t i = 0; i < n; i += 4*6)
+	{
+		gen_square (v + i, x, y, w, h);
+		x += 0.1f;
+		y += 0.1f;
+	}
+}
+
+
+
+
+void gpu_setup_vertex (GLuint vbo [2], uint32_t n)
+{
+	GLenum const target = GL_ARRAY_BUFFER;
+	GLenum const type = GL_FLOAT;
+	GLboolean const normalized = GL_FALSE;
+	GLvoid const * pointer = 0;
+	GLint const dim0 = 4;
+	GLint const dim1 = 1;
+	GLsizei const stride0 = sizeof (float) * dim0;
+	GLsizei const stride1 = sizeof (float) * dim1;
+	GLuint const index0 = 0;
+	GLuint const index1 = 1;
+	GLsizeiptr const size0 = stride0 * n;
+	GLsizeiptr const size1 = stride1 * n;
+	GLvoid const * data = NULL;
+	GLbitfield const flags = GL_MAP_WRITE_BIT;
+	glGenBuffers (2, vbo);
+	
+	glBindBuffer (target, vbo [0]);
+	glBufferStorage(target, size0, data, flags);
+	glEnableVertexAttribArray (index0);
+	glVertexAttribPointer (index0, dim0, type, normalized, stride0, pointer);
+	GL_CHECK_ERROR;
+	
+	glBindBuffer (target, vbo [1]);
+	glBufferStorage(target, size1, data, flags);
+	glEnableVertexAttribArray (index1);
+	glVertexAttribPointer (index1, dim1, type, normalized, stride1, pointer);
+	GL_CHECK_ERROR;
+}
+
+
+
+
+void gen_buffer_slots (uint32_t n, uint32_t first [], uint32_t capacity [])
+{
+	uint32_t f = 0;
+	for (uint32_t i = 0; i < n; ++ i)
+	{
+		first [i] = f;
+		f += capacity [i];
+	}
+}
+
+
+//first: Specifies the starting index in the enabled arrays.
+//count: Specifies the number of indices to be rendered.
+void app_draw (uint32_t n, uint32_t first [], uint32_t count [])
+{
+	for (uint32_t i = 0; i < n; ++ i)
+	{
+		glDrawArrays (GL_TRIANGLES, (GLint)first [i], (GLsizei)count [i]);
+	}
+}
+
+
+
+void setup_test_texture ()
+{
+	GLuint texture;
+	GLsizei const width = 2;
+	GLsizei const height = 2;
+	GLsizei const layerCount = 2;
+	GLsizei const mipLevelCount = 1;
+	// Read you texels here. In the current example, we have 2*2*2 = 8 texels, with each texel being 4 GLubytes.
+	GLubyte texels[32] = 
+	{
+		 // Texels for first image.
+		 0,   0,   0,   255,
+		 255, 0,   0,   255,
+		 0,   255, 0,   255,
+		 0,   0,   255, 255,
+		 // Texels for second image.
+		 255, 255, 255, 255,
+		 255, 255,   0, 255,
+		 0,   255, 255, 255,
+		 255, 0,   255, 255,
+	};
+	glGenTextures (1,&texture);
+	glBindTexture (GL_TEXTURE_2D_ARRAY,texture);
+	// Allocate the storage.
+	glTexStorage3D (GL_TEXTURE_2D_ARRAY, mipLevelCount, GL_RGBA8, width, height, layerCount);
+	// Upload pixel data.
+	// The first 0 refers to the mipmap level (level 0, since there's only 1)
+	// The following 2 zeroes refers to the x and y offsets in case you only want to specify a subrectangle.
+	// The final 0 refers to the layer index offset (we start from index 0 and have 2 levels).
+	// Altogether you can specify a 3D box subset of the overall texture, but only one mip level at a time.
+	glTexSubImage3D (GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, layerCount, GL_RGBA, GL_UNSIGNED_BYTE, texels);
+	// Always set reasonable texture parameters
+	glTexParameteri (GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri (GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri (GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri (GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+
+
+
