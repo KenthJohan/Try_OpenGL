@@ -27,9 +27,7 @@ void app_init (uint32_t * flags)
 
 void app_set_icon (SDL_Window * window)
 {
-	// Declare an SDL_Surface to be filled in with pixel data from an image file
-	SDL_Surface * surface;
-	Uint16 pixels[16*16] = 
+	uint16_t pixels [16*16] = 
 	{
 		0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff,
 		0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff,
@@ -64,14 +62,10 @@ void app_set_icon (SDL_Window * window)
 		0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff,
 		0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff, 0x0fff
 	};
-	
-	surface = SDL_CreateRGBSurfaceFrom(pixels,16,16,16,16*2,0x0f00,0x00f0,0x000f,0xf000);
-	
-	// The icon is attached to the window pointer
-	SDL_SetWindowIcon(window, surface);
-	
-	// ...and the surface containing the icon pixel data is no longer required.
-	SDL_FreeSurface(surface);
+	SDL_Surface * surface = SDL_CreateRGBSurfaceFrom (pixels,16,16,16,16*2,0x0f00,0x00f0,0x000f,0xf000);
+	ASSERT (surface);
+	SDL_SetWindowIcon (window, surface);
+	SDL_FreeSurface (surface);
 }
 
 
@@ -93,9 +87,6 @@ SDL_Window * app_create_window ()
 	//SDL_SetWindowOpacity (window, 0.5);
 	return window;
 }
-
-
-
 
 
 
@@ -138,7 +129,7 @@ void gen_grid (uint32_t n, float v [])
 
 
 
-void gpu_setup_vertex (GLuint vbo [2], uint32_t n)
+void gpu_setup_vertex (GLuint vbo0, GLuint vbo1, uint32_t n)
 {
 	GLenum const target = GL_ARRAY_BUFFER;
 	GLenum const type = GL_FLOAT;
@@ -154,15 +145,14 @@ void gpu_setup_vertex (GLuint vbo [2], uint32_t n)
 	GLsizeiptr const size1 = stride1 * n;
 	GLvoid const * data = NULL;
 	GLbitfield const flags = GL_MAP_WRITE_BIT;
-	glGenBuffers (2, vbo);
 	
-	glBindBuffer (target, vbo [0]);
+	glBindBuffer (target, vbo0);
 	glBufferStorage(target, size0, data, flags);
 	glEnableVertexAttribArray (index0);
 	glVertexAttribPointer (index0, dim0, type, normalized, stride0, pointer);
 	GL_CHECK_ERROR;
 	
-	glBindBuffer (target, vbo [1]);
+	glBindBuffer (target, vbo1);
 	glBufferStorage(target, size1, data, flags);
 	glEnableVertexAttribArray (index1);
 	glVertexAttribPointer (index1, dim1, type, normalized, stride1, pointer);
@@ -172,15 +162,7 @@ void gpu_setup_vertex (GLuint vbo [2], uint32_t n)
 
 
 
-void gen_buffer_slots (uint32_t n, uint32_t first [], uint32_t capacity [])
-{
-	uint32_t f = 0;
-	for (uint32_t i = 0; i < n; ++ i)
-	{
-		first [i] = f;
-		f += capacity [i];
-	}
-}
+
 
 
 //first: Specifies the starting index in the enabled arrays.
@@ -190,6 +172,7 @@ void app_draw (uint32_t n, uint32_t first [], uint32_t count [])
 	for (uint32_t i = 0; i < n; ++ i)
 	{
 		glDrawArrays (GL_TRIANGLES, (GLint)first [i], (GLsizei)count [i]);
+		//glDrawArrays (GL_LINES, (GLint)first [i], (GLsizei)count [i]);
 	}
 }
 

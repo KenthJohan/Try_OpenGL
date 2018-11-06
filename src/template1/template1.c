@@ -60,22 +60,20 @@ void update_layer (GLuint vbo, uint32_t index, uint32_t layer)
 
 
 
-void setup_font (FT_Face face)
+void setup_font (GLuint tex, FT_Face face)
 {
-	GLuint texture;
 	GLenum const target = GL_TEXTURE_2D_ARRAY;
 	GLsizei const width = 50;
 	GLsizei const height = 50;
 	GLsizei const layerCount = 128;
 	GLsizei const mipLevelCount = 1;
 	GLenum const internalformat = GL_R8;
-	glGenTextures (1, &texture);
-	glBindTexture (target, texture);
+	glBindTexture (target, tex);
 	glTexStorage3D (target, mipLevelCount, internalformat, width, height, layerCount);
 	GL_CHECK_ERROR;
 	
 	//IMPORTANT. Disable byte-alignment restriction.
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
 	
 	for (GLubyte c = 0; c < 128; c++)
 	{
@@ -120,7 +118,8 @@ void setup_font (FT_Face face)
 
 void update_text 
 (
-	GLuint vbo [2], 
+	GLuint vbo0, 
+	GLuint vbo1, 
 	uint32_t vfirst, 
 	uint32_t * vcount, 
 	uint32_t vcapacity, 
@@ -142,11 +141,12 @@ void update_text
 	float w = 0.1f;
 	float h = 0.1f;
 	
-	glBindBuffer (target, vbo [0]);
+	glBindBuffer (target, vbo0);
 	float * p = glMapBufferRange (target, offset0, length0, access);
 	GL_CHECK_ERROR;
-	glBindBuffer (target, vbo [1]);
+	glBindBuffer (target, vbo1);
 	float * l = glMapBufferRange (target, offset1, length1, access);
+	
 	char const * c = text;
 	uint32_t vi;
 	for (vi = 0; vi < vcapacity; vi += 6)
@@ -159,17 +159,69 @@ void update_text
 	}
 	(*vcount) = vi;
 	
-	glBindBuffer (target, vbo [0]);
+	glBindBuffer (target, vbo0);
 	glUnmapBuffer (target);
-	glBindBuffer (target, vbo [1]);
+	glBindBuffer (target, vbo1);
 	glUnmapBuffer (target);
 	GL_CHECK_ERROR;
 }
 
 
 
-
-
+void update_grid 
+(
+	GLuint vbo0,
+	GLuint vbo1,
+	uint32_t vfirst, 
+	uint32_t * vcount, 
+	uint32_t vcapacity, 
+	uint32_t w,
+	uint32_t h
+)
+{
+	uint32_t const vdim0 = 4;
+	uint32_t const vdim1 = 1;
+	uint32_t const vsize0 = sizeof (float) * vdim0;
+	uint32_t const vsize1 = sizeof (float) * vdim1;
+	GLenum const target = GL_ARRAY_BUFFER;
+	GLbitfield const access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	GLintptr const offset0 = vfirst * vsize0;
+	GLintptr const offset1 = vfirst * vsize1;
+	GLsizeiptr const length0 = vcapacity * vsize0;
+	GLsizeiptr const length1 = vcapacity * vsize1;
+	
+	glBindBuffer (target, vbo0);
+	float * p = glMapBufferRange (target, offset0, length0, access);
+	GL_CHECK_ERROR;
+	glBindBuffer (target, vbo1);
+	float * l = glMapBufferRange (target, offset1, length1, access);
+	GL_CHECK_ERROR;
+	
+	
+	char C = 'a';
+	float const dx = 2.0f/(float)w;
+	float const dy = 2.0f/(float)h;
+	uint32_t vi = 0;
+	for (uint32_t c = 0; c < w; ++ c)
+	for (uint32_t r = 0; r < h; ++ r)
+	{
+		float x = -1.0f + (dx * c);
+		float y = -1.0f + (dy * r);
+		TRACE_F ("%f %f", (double)x, (double)y);
+		gen_square (p + (vdim0 * vi), x, y, dx, dy);
+		gen_layer (l + (vdim1 * vi), C);
+		vi += 6;
+		C ++;
+		if (vi >= vcapacity) {break;}
+	}
+	(*vcount) = vi;
+	
+	glBindBuffer (target, vbo0);
+	glUnmapBuffer (target);
+	glBindBuffer (target, vbo1);
+	glUnmapBuffer (target);
+	GL_CHECK_ERROR;
+}
 
 
 
@@ -227,21 +279,37 @@ int main (int argc, char *argv[])
 	vu32_set1 (DRAWGROUP_COUNT, drawdata.first, 0);
 	vu32_set1 (DRAWGROUP_COUNT, drawdata.count, 0);
 	vu32_set1 (DRAWGROUP_COUNT, drawdata.capacity, 0);
-	vu32_setl (drawdata.capacity, DRAWGROUP_COUNT, 100, 0, 0, 0, 0, 0, 24, 0, 0, 0);
-	gen_buffer_slots (DRAWGROUP_COUNT, drawdata.first, drawdata.capacity);
+	vu32_setl (drawdata.capacity, DRAWGROUP_COUNT, 100, 0, 0, 0, 0, 6*6*6, 24, 0, 0, 0);
+	vu32_ladder (DRAWGROUP_COUNT, drawdata.first, drawdata.capacity);
 	
 	
-	GLuint vao;
+	
+	GLuint vao [1];
 	GLuint vbo [2];
-	glGenVertexArrays (1, &vao);
-	glBindVertexArray (vao);
+	GLuint tex [2];
+	glGenVertexArrays (1, vao);
+	glGenBuffers (2, vbo);
+	glGenTextures (2, tex);
+	glBindVertexArray (vao [0]);
 	
-	gpu_setup_vertex (vbo, drawdata.first [DRAWGROUP_COUNT-1]);
-	setup_font (face);
+	gpu_setup_vertex (vbo [0], vbo [1], drawdata.first [DRAWGROUP_COUNT-1]);
+	setup_font (tex [0], face);
+
+	update_grid 
+	(
+		vbo [0], 
+		vbo [1], 
+		drawdata.first [5], 
+		drawdata.count + 5, 
+		drawdata.capacity [5],
+		6,
+		6
+	);
 
 	update_text 
 	(
-		vbo, 
+		vbo [0], 
+		vbo [1], 
 		drawdata.first [0], 
 		drawdata.count + 0, 
 		drawdata.capacity [0], 
@@ -252,7 +320,8 @@ int main (int argc, char *argv[])
 	
 	update_text 
 	(
-		vbo, 
+		vbo [0], 
+		vbo [1], 
 		drawdata.first [6], 
 		drawdata.count + 6, 
 		drawdata.capacity [6], 
