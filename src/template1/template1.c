@@ -29,31 +29,76 @@ uint32_t map [] =
 
 
 
-
-void update_square (GLuint vbo, uint32_t index, float x, float y, float w, float h)
+void * app_map_glbuffer 
+(
+	GLuint vbo,
+	uint32_t vfirst, 
+	uint32_t vcapacity
+)
 {
-	ASSERT (glIsBuffer (vbo));
-	float v [4*6 * 2];
-	gen_grid (4*6 * 2, v);
 	GLenum const target = GL_ARRAY_BUFFER;
-	GLintptr const offset = index * sizeof (float) * 4 * 6;
-	GLsizeiptr const size = sizeof (v);
+	GLbitfield const access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	uint32_t const vdim = 4;
+	uint32_t const vsize = sizeof (float) * vdim;
+	GLintptr const offset = vfirst * vsize;
+	GLsizeiptr const length = vcapacity * vsize;
+	TRACE_F ("offset %i", offset);
+	TRACE_F ("length %i", length);
 	glBindBuffer (target, vbo);
-	glBufferSubData (target, offset, size, v); 
+	void * data = glMapBufferRange (target, offset, length, access);
+	GL_CHECK_ERROR;
+	return data;
 }
 
 
-void update_layer (GLuint vbo, uint32_t index, uint32_t layer)
+void app_unmap_glbuffer (GLuint vbo)
 {
-	ASSERT (glIsBuffer (vbo));
-	float v [6] = {layer,layer,layer,layer,layer,layer};
 	GLenum const target = GL_ARRAY_BUFFER;
-	GLintptr const offset = index * sizeof (v);
-	GLsizeiptr const size = sizeof (v);
 	glBindBuffer (target, vbo);
-	glBufferSubData (target, offset, size, v); 
+	glUnmapBuffer (target);
+	GL_CHECK_ERROR;
 }
 
+
+
+void update_grid 
+(
+	GLuint vbo [3], 
+	uint32_t vfirst, 
+	uint32_t * vcount, 
+	uint32_t vcapacity,
+	uint32_t w,
+	uint32_t h
+)
+{
+	TRACE_F ("vfirst %i", vfirst);
+	TRACE_F ("vcapacity %i", vcapacity);
+	uint32_t const vdim = 4;
+	float * vpos = app_map_glbuffer (vbo [0], vfirst, vcapacity);
+	float * vcol = app_map_glbuffer (vbo [1], vfirst, vcapacity);
+	float * vtex = app_map_glbuffer (vbo [2], vfirst, vcapacity);
+	char l = '0';
+	float dx = 2.0f / (float) w;
+	float dy = 2.0f / (float) h;
+	uint32_t vi = 0;
+	for (uint32_t y = 0; y < w; ++y)
+	for (uint32_t x = 0; x < h; ++x)
+	{
+		float r = (float)rand () / (float)RAND_MAX;
+		float g = (float)rand () / (float)RAND_MAX;
+		float b = (float)rand () / (float)RAND_MAX;
+		float a = 1.0f;
+		gen_square_pos (vpos + (vdim * vi), (float)x*dx-1.0f, (float)y*dx-1.0f, dx, dy);
+		gen_square_col (vcol + (vdim * vi), r, g, b, a);
+		gen_square_tex (vtex + (vdim * vi), (float)l);
+		l ++;
+		vi += 6;
+	}
+	(*vcount) = vi;
+	app_unmap_glbuffer (vbo [0]);
+	app_unmap_glbuffer (vbo [1]);
+	app_unmap_glbuffer (vbo [2]);
+}
 
 
 
@@ -115,7 +160,7 @@ void setup_font (GLuint tex, FT_Face face)
 
 
 
-
+/*
 void update_text 
 (
 	GLuint vbo0, 
@@ -166,8 +211,10 @@ void update_text
 	GL_CHECK_ERROR;
 }
 
+*/
 
 
+/*
 void update_grid 
 (
 	GLuint vbo0,
@@ -222,7 +269,7 @@ void update_grid
 	glUnmapBuffer (target);
 	GL_CHECK_ERROR;
 }
-
+*/
 
 
 int main (int argc, char *argv[])
@@ -272,65 +319,31 @@ int main (int argc, char *argv[])
 	#define DRAWGROUP_COUNT 10
 	struct
 	{
-		uint32_t first [DRAWGROUP_COUNT];
-		uint32_t count [DRAWGROUP_COUNT];
-		uint32_t capacity [DRAWGROUP_COUNT];
+		uint32_t n;
+		uint32_t o [DRAWGROUP_COUNT];
+		uint32_t l [DRAWGROUP_COUNT];
+		uint32_t c [DRAWGROUP_COUNT];
 	} drawdata;
-	vu32_set1 (DRAWGROUP_COUNT, drawdata.first, 0);
-	vu32_set1 (DRAWGROUP_COUNT, drawdata.count, 0);
-	vu32_set1 (DRAWGROUP_COUNT, drawdata.capacity, 0);
-	vu32_setl (drawdata.capacity, DRAWGROUP_COUNT, 100, 0, 0, 0, 0, 6*6*6, 24, 0, 0, 0);
-	vu32_ladder (DRAWGROUP_COUNT, drawdata.first, drawdata.capacity);
+	drawdata.n = DRAWGROUP_COUNT;
+	
+	vu32_set1 (drawdata.n, drawdata.o, 0);
+	vu32_set1 (drawdata.n, drawdata.l, 0);
+	vu32_set1 (drawdata.n, drawdata.c, 0);
+	vu32_setl (drawdata.c, drawdata.n, 6*10*10, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	vu32_ladder (drawdata.n, drawdata.o, drawdata.c);
 	
 	
 	
 	GLuint vao [1];
-	GLuint vbo [2];
+	GLuint vbo [3];
 	GLuint tex [2];
 	glGenVertexArrays (1, vao);
-	glGenBuffers (2, vbo);
+	glGenBuffers (3, vbo);
 	glGenTextures (2, tex);
 	glBindVertexArray (vao [0]);
-	
-	gpu_setup_vertex (vbo [0], vbo [1], drawdata.first [DRAWGROUP_COUNT-1]);
+	gpu_setup_vertex1 (vbo, drawdata.o [drawdata.n-1] + drawdata.c [drawdata.n-1]);
 	setup_font (tex [0], face);
-
-	update_grid 
-	(
-		vbo [0], 
-		vbo [1], 
-		drawdata.first [5], 
-		drawdata.count + 5, 
-		drawdata.capacity [5],
-		6,
-		6
-	);
-
-	update_text 
-	(
-		vbo [0], 
-		vbo [1], 
-		drawdata.first [0], 
-		drawdata.count + 0, 
-		drawdata.capacity [0], 
-		"Hello",
-		0.0f,
-		0.0f
-	);
-	
-	update_text 
-	(
-		vbo [0], 
-		vbo [1], 
-		drawdata.first [6], 
-		drawdata.count + 6, 
-		drawdata.capacity [6], 
-		"XYZÅÄÖ",
-		0.0f,
-		0.5f
-	);
-
-
+	update_grid (vbo, drawdata.o [0], drawdata.l + 0, drawdata.c [0], 10, 10);
 
 
 
@@ -355,10 +368,10 @@ int main (int argc, char *argv[])
 					SDL_PushEvent (&event);
 					break;
 					case SDLK_c:
-					update_layer (vbo [1], 0, 0);
+					//update_layer (vbo [1], 0, 0);
 					break;
 					case SDLK_v:
-					update_layer (vbo [1], 0, 1);
+					//update_layer (vbo [1], 0, 1);
 					break;
 				}
 				break;
@@ -370,7 +383,7 @@ int main (int argc, char *argv[])
 		glClearColor (0.2f, 0.3f, 0.3f, 1.0f);
 		glClear (GL_COLOR_BUFFER_BIT);
 		
-		app_draw (DRAWGROUP_COUNT, drawdata.first, drawdata.count);
+		app_draw (drawdata.n, drawdata.o, drawdata.c);
 		//glDrawArrays (GL_TRIANGLES, 0, 5*6);
 		//glDrawArrays (GL_POINTS, 0, 12);
 		//glDrawArrays (GL_LINES, 0, 6*100);

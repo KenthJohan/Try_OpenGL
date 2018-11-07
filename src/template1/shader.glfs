@@ -1,6 +1,9 @@
 #version 330 core
+
 in vec3 texpos;
-out vec4 color;
+in vec4 color;
+
+out vec4 out_color;
 
 uniform sampler2DArray tex;
 
@@ -8,7 +11,9 @@ void main()
 {
 	vec3 tp = texpos;
 	//tp.z = 'H';
+	
 	vec4 sampled = texture (tex, tp);
-	color = vec4 (1.0, 1.0, 1.0, sampled.r);
-	//color = vec4 (1.0, sampled.r, 1.0, 1.0);
+	vec4 pixcol = vec4 (1.0, 1.0, 1.0, sampled.r);	
+	float a = 0.5;
+	out_color = (1.0-a) * color + (a) * pixcol;
 }  

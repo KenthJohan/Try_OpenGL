@@ -3,6 +3,7 @@
 #include "SDLGL.h"
 #include "debug.h"
 #include "debug_gl.h"
+#include "glwrap.h"
 
 
 #include <stdio.h>
@@ -90,28 +91,52 @@ SDL_Window * app_create_window ()
 
 
 
-void gen_square (float v [48], float x, float y, float w, float h)
+void gen_square_pos (float v [48], float x, float y, float w, float h)
 {
 	float v0 [] =
 	{
-		x,     y + h,   0.0, 0.0,            
-		x,     y,       0.0, 1.0,
-		x + w, y,       1.0, 1.0,
-		x,     y + h,   0.0, 0.0,
-		x + w, y,       1.0, 1.0,
-		x + w, y + h,   1.0, 0.0       
+		x,     y + h,   0.0f, 0.0f,
+		x,     y,       0.0f, 0.0f,
+		x + w, y,       0.0f, 0.0f,
+		x,     y + h,   0.0f, 0.0f,
+		x + w, y,       0.0f, 0.0f,
+		x + w, y + h,   0.0f, 0.0f       
 	};
 	memcpy (v, v0, sizeof (v0));
 }
 
 
-void gen_layer (float v [6], float l)
+void gen_square_tex (float v [48], float l)
 {
-	float v0 [] = {l, l, l, l, l, l};
+	float v0 [] =
+	{
+		0.0f, 0.0f, l, 0.0f,
+		0.0f, 1.0f, l, 0.0f,
+		1.0f, 1.0f, l, 0.0f,
+		0.0f, 0.0f, l, 0.0f,
+		1.0f, 1.0f, l, 0.0f,
+		1.0f, 0.0f, l, 0.0f       
+	};
 	memcpy (v, v0, sizeof (v0));
 }
 
 
+void gen_square_col (float v [48], float r, float g, float b, float a)
+{
+	float v0 [] =
+	{
+		r, g, b, a,
+		r, g, b, a,
+		r, g, b, a,
+		r, g, b, a,
+		r, g, b, a,
+		r, g, b, a
+	};
+	memcpy (v, v0, sizeof (v0));
+}
+
+
+/*
 void gen_grid (uint32_t n, float v [])
 {
 	float x = 0.0f;
@@ -125,39 +150,48 @@ void gen_grid (uint32_t n, float v [])
 		y += 0.1f;
 	}
 }
+*/
 
 
 
 
-void gpu_setup_vertex (GLuint vbo0, GLuint vbo1, uint32_t n)
+void gpu_setup_vertex1 (GLuint vbo [3], uint32_t vn)
 {
-	GLenum const target = GL_ARRAY_BUFFER;
-	GLenum const type = GL_FLOAT;
-	GLboolean const normalized = GL_FALSE;
-	GLvoid const * pointer = 0;
-	GLint const dim0 = 4;
-	GLint const dim1 = 1;
-	GLsizei const stride0 = sizeof (float) * dim0;
-	GLsizei const stride1 = sizeof (float) * dim1;
-	GLuint const index0 = 0;
-	GLuint const index1 = 1;
-	GLsizeiptr const size0 = stride0 * n;
-	GLsizeiptr const size1 = stride1 * n;
-	GLvoid const * data = NULL;
-	GLbitfield const flags = GL_MAP_WRITE_BIT;
+	GLenum const target [] = {GL_ARRAY_BUFFER, GL_ARRAY_BUFFER, GL_ARRAY_BUFFER};
+	uint32_t const index [] = {0, 1, 2};
+	GLenum const type [] = {GL_FLOAT, GL_FLOAT, GL_FLOAT};
+	GLboolean const normalized [] = {GL_FALSE, GL_FALSE, GL_FALSE};
+	uint32_t const offset [] = {0, 0, 0};
+	uint32_t const dim [] = {4, 4, 4};
+	uint32_t const stride [] = {sizeof (float) * dim [0], sizeof (float) * dim [1], sizeof (float) * dim [2]};
+	GLbitfield const flags [] = {GL_MAP_WRITE_BIT, GL_MAP_WRITE_BIT, GL_MAP_WRITE_BIT};
 	
-	glBindBuffer (target, vbo0);
-	glBufferStorage(target, size0, data, flags);
-	glEnableVertexAttribArray (index0);
-	glVertexAttribPointer (index0, dim0, type, normalized, stride0, pointer);
-	GL_CHECK_ERROR;
+	xxgl_layout 
+	(
+		3,
+		index,
+		dim,
+		type,
+		normalized,
+		stride,
+		offset,
+		target,
+		vbo
+	);
 	
-	glBindBuffer (target, vbo1);
-	glBufferStorage(target, size1, data, flags);
-	glEnableVertexAttribArray (index1);
-	glVertexAttribPointer (index1, dim1, type, normalized, stride1, pointer);
-	GL_CHECK_ERROR;
+	xxgl_allocate 
+	(
+		3,
+		target,
+		vbo,
+		stride,
+		NULL,
+		flags,
+		vn
+	);
 }
+
+
 
 
 
