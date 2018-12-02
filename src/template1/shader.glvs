@@ -1,18 +1,18 @@
 #version 330 core
 
-layout (location = 0) in vec4 in_pos;
-layout (location = 1) in vec4 in_col;
-layout (location = 2) in vec4 in_tex;
+layout (location = 0) in vec4 InPosXYZW;
+layout (location = 1) in vec4 InColRGBA;
+layout (location = 2) in vec4 InTexUVL0;
 
-out vec3 texpos;
-out vec4 color;
+out vec3 TexUVL;
+out vec4 ColRGBA;
 
 
 
 void main()
 {
-	gl_Position = vec4 (in_pos.xy, 0.0f, 1.0);
-	texpos = in_tex.xyz;
-	color = in_col;
+	gl_Position = vec4 (InPosXYZW.xy, 0.0f, 1.0);
+	ColRGBA = InColRGBA;
+	TexUVL  = InTexUVL0.xyz;
 }
 

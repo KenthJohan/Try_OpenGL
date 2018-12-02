@@ -14,7 +14,8 @@ project Template1 is
 	
 	Main_Files :=
 	(
-		"template1.c"
+		"template1.c",
+		"example_font.c"
 	);
 	
 	for Main use Main_Files;

@@ -1,13 +1,17 @@
-#pragma once
+#include <stdio.h>
+#include <unistd.h>
+#include <assert.h>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H  
+
+//Common simple C functions
 #include "SDLGL.h"
 #include "debug.h"
 #include "debug_gl.h"
+#include "shader.h"
+#include "v4.h"
 #include "glwrap.h"
-
-
-#include <stdio.h>
-#include <unistd.h>
 
 
 #define APP_WINDOW_WIDTH 1024
@@ -91,7 +95,7 @@ SDL_Window * app_create_window ()
 
 
 
-void gen4x6_square_pos (float v [24], float x, float y, float w, float h)
+void gen_square_pos (float v [48], float x, float y, float w, float h)
 {
 	float v0 [] =
 	{
@@ -106,48 +110,18 @@ void gen4x6_square_pos (float v [24], float x, float y, float w, float h)
 }
 
 
-void gen4x6_square_tex1 (float v [24], float w, float h, float l)
+void gen_square_tex (float v [48], float l)
 {
-	float v0 [24] =
+	float v0 [] =
 	{
 		0.0f, 0.0f, l, 0.0f,
-		0.0f, h   , l, 0.0f,
-		w   , h   , l, 0.0f,
+		0.0f, 1.0f, l, 0.0f,
+		1.0f, 1.0f, l, 0.0f,
 		0.0f, 0.0f, l, 0.0f,
-		w   , h   , l, 0.0f,
-		w   , 0.0f, l, 0.0f       
+		1.0f, 1.0f, l, 0.0f,
+		1.0f, 0.0f, l, 0.0f       
 	};
 	memcpy (v, v0, sizeof (v0));
-}
-
-
-void gen4x6_square_tex (uint32_t n, float v [24], uint8_t const l [])
-{
-	for (uint32_t i = 0; i < n; ++ i)
-	{
-		gen4x6_square_tex1 (v, 0.0f, 0.0f, (float)l [i]);
-		v += 24;
-	}
-}
-
-
-void gen4x6_grid_pos 
-(
-	float v [],
-	uint32_t w,
-	uint32_t h
-)
-{
-	float dx = 2.0f / (float) w;
-	float dy = 2.0f / (float) h;
-	for (uint32_t y = 0; y < w; ++y)
-	for (uint32_t x = 0; x < h; ++x)
-	{
-		float xx = (float)x * dx - 1.0f;
-		float yy = (float)y * dy - 1.0f;
-		gen4x6_square_pos (v, xx, yy, dx, dy);
-		v += 24;
-	}
 }
 
 
@@ -239,110 +213,6 @@ void setup_test_texture ()
 }
 
 
-struct drawrange
-{
-	uint32_t n;
-	uint32_t * offset;
-	uint32_t * length;
-	uint32_t * capacity;
-};
-
-
-void drawrange_init (struct drawrange * dr)
-{
-	dr->offset = calloc (dr->n, sizeof (uint32_t));
-	dr->length = calloc (dr->n, sizeof (uint32_t));
-	dr->capacity = calloc (dr->n, sizeof (uint32_t));
-	ASSERT (dr->offset);
-	ASSERT (dr->length);
-	ASSERT (dr->capacity);
-}
-
-
-uint32_t drawrange_cap (struct drawrange * dr)
-{
-	return dr->offset [dr->n-1] + dr->capacity [dr->n-1];
-}
-
-
-void setup_font 
-(
-	GLuint tex, 
-	FT_Face face, 
-	uint32_t a [],
-	float x [],
-	float y [],
-	float w [],
-	float h []
-)
-{
-	GLenum const target = GL_TEXTURE_2D_ARRAY;
-	GLsizei const width = 50;
-	GLsizei const height = 50;
-	GLsizei const layerCount = 128;
-	GLsizei const mipLevelCount = 1;
-	GLenum const internalformat = GL_R8;
-	glBindTexture (target, tex);
-	glTexStorage3D (target, mipLevelCount, internalformat, width, height, layerCount);
-	GL_CHECK_ERROR;
-	
-	//IMPORTANT. Disable byte-alignment restriction.
-	glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
-	
-	for (uint8_t c = 0; c < 128; c++)
-	{
-		{
-			int r = FT_Load_Char (face, c, FT_LOAD_RENDER);
-			ASSERT_F (r == 0, "ERROR::FREETYTPE: Failed to load Glyph %i", r);
-			if (r) {continue;}
-		}
-		
-		a [c] = face->glyph->advance.x;
-		x [c] = face->glyph->bitmap_left;
-		y [c] = face->glyph->bitmap_top;
-		w [c] = face->glyph->bitmap.width;
-		h [c] = face->glyph->bitmap.rows;
-		
-		GLint xoffset = 0;
-		GLint yoffset = 0;
-		GLint zoffset = c;
-		
-		TRACE_F ("glyph %i %i", face->glyph->bitmap.width, face->glyph->bitmap.rows);
-		
-		glTexSubImage3D 
-		(
-			target, 
-			0, 
-			xoffset, 
-			yoffset, 
-			zoffset, 
-			face->glyph->bitmap.width,
-			face->glyph->bitmap.rows,
-			1, 
-			GL_RED,
-			GL_UNSIGNED_BYTE, 
-			face->glyph->bitmap.buffer
-		);
-		GL_CHECK_ERROR;
-	}
-	
-	// Always set reasonable texture parameters
-	glTexParameteri (target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri (target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri (target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri (target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	
-	glTexParameteri (target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri (target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri (target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri (target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri (target, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri (target, GL_TEXTURE_MAX_LEVEL, 0);
-	
-	
-}
-
-
 void * app_map_glbuffer 
 (
 	GLuint vbo,
@@ -374,101 +244,45 @@ void app_unmap_glbuffer (GLuint vbo)
 }
 
 
-void update_tex_alpha 
+/*
+struct drawi
+{
+	uint32_t * first;
+	uint32_t * offset;
+};
+*/
+
+
+void render_gen_grid 
 (
-	GLuint vbo, 
-	uint32_t vfirst, 
-	uint32_t * vcount, 
-	uint32_t vcapacity,
-	uint32_t n
+	GLuint b, //Buffer object
+	uint32_t o, //Offset
+	uint32_t * n, //Number of vertices
+	uint32_t w, //Width
+	uint32_t h //Height
 )
 {
 	GLenum const target = GL_ARRAY_BUFFER;
 	GLbitfield const access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-	uint32_t const vdim = 4;
-	uint32_t const vsize = sizeof (float) * vdim;
-	GLintptr const offset8 = vfirst * vsize;
-	GLsizeiptr const length8 = vcapacity * vsize;
-	TRACE_F ("offset %i", offset8);
-	TRACE_F ("length %i", length8);
-	glBindBuffer (target, vbo);
-	float * v = glMapBufferRange (target, offset8, length8, access);
-	uint8_t * layer = malloc (sizeof (uint8_t) * n);
-	for (uint32_t i = 0; i < n; ++i)
+	glBindBuffer (target, b);
+	float * v = glMapBufferRange (target, o, *n, access);
+	for (uint32_t y = 0; y < w; ++y)
+	for (uint32_t x = 0; x < h; ++x)
 	{
-		layer [i] = '0' + i;
+		float dx = 2.0f / (float) w;
+		float dy = 2.0f / (float) h;
+		float xx = (float)x * dx - 1.0f;
+		float yy = (float)y * dx - 1.0f;
+		gen_square_pos (v, xx, yy, dx, dy);
+		v += 48;
 	}
-	gen4x6_square_tex (n, v, layer);
-	glUnmapBuffer (target);
-	free (layer);
+	app_unmap_glbuffer (b);
 }
 
 
-void update_tex_random 
+void update_grid 
 (
-	GLuint vbo, 
-	uint32_t vfirst, 
-	uint32_t * vcount, 
-	uint32_t vcapacity,
-	uint32_t n
-)
-{
-	GLenum const target = GL_ARRAY_BUFFER;
-	GLbitfield const access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-	uint32_t const vdim = 4;
-	uint32_t const vsize = sizeof (float) * vdim;
-	GLintptr const offset8 = vfirst * vsize;
-	GLsizeiptr const length8 = vcapacity * vsize;
-	TRACE_F ("offset %i", offset8);
-	TRACE_F ("length %i", length8);
-	glBindBuffer (target, vbo);
-	float * v = glMapBufferRange (target, offset8, length8, access);
-	for (uint32_t i = 0; i < n; ++i)
-	{
-		//gen4x6_square_tex1 (v, (float)(rand () % 256));
-		v += 24;
-	}
-	glUnmapBuffer (target);
-}
-
-
-void update_col_random 
-(
-	GLuint vbo, 
-	uint32_t vfirst, 
-	uint32_t * vcount, 
-	uint32_t vcapacity,
-	uint32_t n
-)
-{
-	GLenum const target = GL_ARRAY_BUFFER;
-	GLbitfield const access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-	uint32_t const vdim = 4;
-	uint32_t const vsize = sizeof (float) * vdim;
-	GLintptr const offset8 = vfirst * vsize;
-	GLsizeiptr const length8 = vcapacity * vsize;
-	TRACE_F ("offset %i", offset8);
-	TRACE_F ("length %i", length8);
-	glBindBuffer (target, vbo);
-	float * v = glMapBufferRange (target, offset8, length8, access);
-	uint32_t vi = 0;
-	for (uint32_t i = 0; i < n; ++i)
-	{
-		float r = (float)rand () / (float)RAND_MAX;
-		float g = (float)rand () / (float)RAND_MAX;
-		float b = (float)rand () / (float)RAND_MAX;
-		float a = 1.0f;
-		v4f32_repeat4 (6, v + (vdim * vi), r, g, b, a);
-		vi += 6;
-	}
-	(*vcount) = vi;
-	glUnmapBuffer (target);
-}
-
-
-void update_pos_grid 
-(
-	GLuint vbo, 
+	GLuint vbo [3], 
 	uint32_t vfirst, 
 	uint32_t * vcount, 
 	uint32_t vcapacity,
@@ -476,17 +290,217 @@ void update_pos_grid
 	uint32_t h
 )
 {
-	GLenum const target = GL_ARRAY_BUFFER;
-	GLbitfield const access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
+	TRACE_F ("vfirst %i", vfirst);
+	TRACE_F ("vcapacity %i", vcapacity);
 	uint32_t const vdim = 4;
-	uint32_t const vsize = sizeof (float) * vdim;
-	GLintptr const offset8 = vfirst * vsize;
-	GLsizeiptr const length8 = vcapacity * vsize;
-	TRACE_F ("offset %i", offset8);
-	TRACE_F ("length %i", length8);
-	glBindBuffer (target, vbo);
-	float * v = glMapBufferRange (target, offset8, length8, access);
-	gen4x6_grid_pos (v, w, h);
-	glUnmapBuffer (target);
+	float * vpos = app_map_glbuffer (vbo [0], vfirst, vcapacity);
+	float * vcol = app_map_glbuffer (vbo [1], vfirst, vcapacity);
+	float * vtex = app_map_glbuffer (vbo [2], vfirst, vcapacity);
+	char l = '0';
+	float dx = 2.0f / (float) w;
+	float dy = 2.0f / (float) h;
+	uint32_t vi = 0;
+	for (uint32_t y = 0; y < w; ++y)
+	for (uint32_t x = 0; x < h; ++x)
+	{
+		float r = (float)rand () / (float)RAND_MAX;
+		float g = (float)rand () / (float)RAND_MAX;
+		float b = (float)rand () / (float)RAND_MAX;
+		float a = 1.0f;
+		gen_square_pos (vpos + (vdim * vi), (float)x*dx-1.0f, (float)y*dx-1.0f, dx, dy);
+		v4f32_repeat4 (6, vcol + (vdim * vi), r, g, b, a);
+		//gen_square_col (vcol + (vdim * vi), r, g, b, a);
+		gen_square_tex (vtex + (vdim * vi), (float)l);
+		l ++;
+		vi += 6;
+	}
+	(*vcount) = vi;
+	app_unmap_glbuffer (vbo [0]);
+	app_unmap_glbuffer (vbo [1]);
+	app_unmap_glbuffer (vbo [2]);
+}
+
+
+void setup_font (GLuint tex, FT_Face face)
+{
+	GLenum const target = GL_TEXTURE_2D_ARRAY;
+	GLsizei const width = 50;
+	GLsizei const height = 50;
+	GLsizei const layerCount = 128;
+	GLsizei const mipLevelCount = 1;
+	GLenum const internalformat = GL_R8;
+	glBindTexture (target, tex);
+	glTexStorage3D (target, mipLevelCount, internalformat, width, height, layerCount);
+	GL_CHECK_ERROR;
+	
+	//IMPORTANT. Disable byte-alignment restriction.
+	glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+	
+	for (GLubyte c = 0; c < 128; c++)
+	{
+		{
+			int r = FT_Load_Char (face, c, FT_LOAD_RENDER);
+			ASSERT_F (r == 0, "ERROR::FREETYTPE: Failed to load Glyph %i", r);
+			if (r) {continue;}
+		}
+		
+		GLint xoffset = 0;
+		GLint yoffset = 0;
+		GLint zoffset = c;
+		
+		TRACE_F ("glyph %i %i", face->glyph->bitmap.width, face->glyph->bitmap.rows);
+		
+		glTexSubImage3D 
+		(
+			target, 
+			0, 
+			xoffset, 
+			yoffset, 
+			zoffset, 
+			face->glyph->bitmap.width,
+			face->glyph->bitmap.rows,
+			1, 
+			GL_RED,
+			GL_UNSIGNED_BYTE, 
+			face->glyph->bitmap.buffer
+		);
+		GL_CHECK_ERROR;
+	}
+	
+	// Always set reasonable texture parameters
+	glTexParameteri (target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri (target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri (target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri (target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+
+
+
+int main (int argc, char *argv[])
+{
+	uint32_t flags = 0;
+	app_init (&flags);
+	
+	SDL_Window * window;
+	SDL_GLContext glcontext;
+	const Uint8 * keyboard;
+	SDL_Event event;
+	FT_Library ft;
+	FT_Face face;
+	{
+		int r = FT_Init_FreeType (&ft);
+		ASSERT_F (r == 0, "ERROR::FREETYPE: Could not init FreeType Library %i", r);
+	}
+	{
+		int r = FT_New_Face(ft, "fonts/arial.ttf", 0, &face);
+		ASSERT_F (r == 0, "ERROR::FREETYPE: Failed to load font %i", r);
+	}
+	FT_Set_Pixel_Sizes (face, 0, 50);
+	
+	window = app_create_window ();
+	
+	glcontext = SDL_GL_CreateContext_CC (window);
+	keyboard = SDL_GetKeyboardState (NULL);
+	
+	glDebugMessageCallback (glDebugOutput, 0);
+	glDebugMessageControl (GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+	//glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+	//glEnable (GL_SCISSOR_TEST);
+	//glEnable (GL_STENCIL_TEST);
+	//glEnable (GL_DEPTH_TEST);
+	glEnable (GL_DEBUG_OUTPUT);
+	glEnable (GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glEnable (GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glClearColor (0.1f, 0.1f, 0.2f, 0.0f);
+	glPointSize (4.0f);
+
+	GLuint program = gl_program_from_filename ("src/template1/shader.glfs;src/template1/shader.glvs");
+	gl_shader_debug1 (program);
+	glUseProgram (program);
+	
+	
+	#define DRAWGROUP_COUNT 10
+	struct
+	{
+		uint32_t n;
+		uint32_t o [DRAWGROUP_COUNT];
+		uint32_t l [DRAWGROUP_COUNT];
+		uint32_t c [DRAWGROUP_COUNT];
+	} drawdata;
+	drawdata.n = DRAWGROUP_COUNT;
+	
+	vu32_set1 (drawdata.n, drawdata.o, 0);
+	vu32_set1 (drawdata.n, drawdata.l, 0);
+	vu32_set1 (drawdata.n, drawdata.c, 0);
+	vu32_setl (drawdata.c, drawdata.n, 6*10*10, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	vu32_ladder (drawdata.n, drawdata.o, drawdata.c);
+	
+	
+	
+	GLuint vao [1];
+	GLuint vbo [3];
+	GLuint tex [2];
+	glGenVertexArrays (1, vao);
+	glGenBuffers (3, vbo);
+	glGenTextures (2, tex);
+	glBindVertexArray (vao [0]);
+	gpu_setup_vertex1 (vbo, drawdata.o [drawdata.n-1] + drawdata.c [drawdata.n-1]);
+	setup_font (tex [0], face);
+	update_grid (vbo, drawdata.o [0], drawdata.l + 0, drawdata.c [0], 10, 10);
+
+
+
+	while (1)
+	{
+		if (flags & APP_QUIT) {break;}
+		if (flags & APP_ERROR) {break;}
+		
+		while (SDL_PollEvent (&event))
+		{
+			switch (event.type)
+			{
+				case SDL_QUIT:
+				flags |= APP_QUIT;
+				break;
+				
+				case SDL_KEYDOWN:
+				switch (event.key.keysym.sym)
+				{
+					case SDLK_ESCAPE:
+					event.type = SDL_QUIT;
+					SDL_PushEvent (&event);
+					break;
+					case SDLK_c:
+					//update_layer (vbo [1], 0, 0);
+					break;
+					case SDLK_v:
+					//update_layer (vbo [1], 0, 1);
+					break;
+				}
+				break;
+			}
+		}
+		
+		
+		
+		glClearColor (0.2f, 0.3f, 0.3f, 1.0f);
+		glClear (GL_COLOR_BUFFER_BIT);
+		
+		app_draw (drawdata.n, drawdata.o, drawdata.c);
+		//glDrawArrays (GL_TRIANGLES, 0, 5*6);
+		//glDrawArrays (GL_POINTS, 0, 12);
+		//glDrawArrays (GL_LINES, 0, 6*100);
+
+		
+		SDL_GL_SwapWindow (window);	
+		SDL_Delay (1);
+	}
+	
+	
+	SDL_GL_DeleteContext (glcontext);
+	
+	return 0;
 }
 
