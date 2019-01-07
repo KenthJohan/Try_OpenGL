@@ -1,3 +1,8 @@
+/*
+https://github.com/KerryL/LibPlot2D/blob/f0b7deca6c9af24c8daab13cc17dd5ab30d1ac06/src/renderer/text.cpp
+
+*/
+
 #include <stdio.h>
 #include <unistd.h>
 #include <assert.h>
@@ -6,15 +11,16 @@
 #include FT_FREETYPE_H  
 
 //Common simple c functions
-#include "SDLGL.h"
-#include "debug.h"
-#include "debug_gl.h"
-#include "v4.h"
-#include "shader.h"
-#include "gen.h"
+#include <csc/SDLGL.h>
+#include <csc/debug.h>
+#include <csc/debug_gl.h>
+#include <csc/v4.h>
+#include <csc/shader.h>
+#include <csc/gen.h>
+#include <csc/gtext.h>
+#include <csc/xxgl.h>
 
 #include "app.h"
-#include "color.h"
 
 
 uint32_t map [] = 
@@ -42,73 +48,6 @@ float * glMapBufferRange_4fv (uint32_t offset, uint32_t length)
 
 
 
-void RenderText 
-(
-	GLuint vbo [3],
-	char const * text, 
-	float x, 
-	float y, 
-	uint32_t ca [],
-	float const cx [],
-	float const cy [],
-	float const cw [],
-	float const ch [],
-	float scale,
-	uint32_t offset, 
-	uint32_t length
-)
-{
-	float * v;
-	glBindBuffer (GL_ARRAY_BUFFER, vbo [0]);
-	v = glMapBufferRange_4fv (offset, length);
-	char const * c;
-	c = text;
-	while (*c)
-	{
-		uint8_t i = *c;
-		float xx = x + cx [i] * scale;
-		float yy = y - (ch [i] - cy [i]) * scale;
-		float w = cw [i] * scale;
-		float h = ch [i] * scale;
-		TRACE_F ("x %f", (double)xx);
-		gen_square_pos (v, xx, yy, w, h);
-		v += 24;
-		x += (ca [i] >> 6) * scale;
-		c++;
-	}
-	glUnmapBuffer (GL_ARRAY_BUFFER);
-	
-	
-	glBindBuffer (GL_ARRAY_BUFFER, vbo [1]);
-	v = glMapBufferRange_4fv (offset, length);
-	srand (1);
-	v4f32_repeat_random (length, v);
-	v4f32_repeat_channel (length, v, 3, 1.0f);
-	glUnmapBuffer (GL_ARRAY_BUFFER);
-	
-	
-	glBindBuffer (GL_ARRAY_BUFFER, vbo [2]);
-	v = glMapBufferRange_4fv (offset, length);
-	c = text;
-	while (*c)
-	{
-		uint8_t i = *c;
-		gen4x6_square_tex1 (v, cw [i] / 50.0f, ch [i] / 50.0f, i);
-		v += 24;
-		c++;
-	}
-	//gen4x6_square_tex (strlen (text), v, (uint8_t const *)text);
-	glUnmapBuffer (GL_ARRAY_BUFFER);
-	
-	
-	glDrawArrays (GL_TRIANGLES, offset, length);
-	//glDrawArrays (GL_LINES, offset, length);
-}
-
-
-
-
-
 void RenderBox 
 (
 	GLuint vbo [3],
@@ -127,6 +66,22 @@ void RenderBox
 	glUnmapBuffer (GL_ARRAY_BUFFER);
 	glDrawArrays (GL_TRIANGLES, offset, length);
 }
+
+
+
+
+struct gui_textbox
+{
+	uint32_t di;
+	float color [4];
+	float pos [4];
+	char * text;
+};
+
+
+
+
+
 
 
 
@@ -159,6 +114,7 @@ int main (int argc, char *argv[])
 	
 	glcontext = SDL_GL_CreateContext_CC (window);
 	keyboard = SDL_GetKeyboardState (NULL);
+	ASSERT (keyboard);
 	
 	glDebugMessageCallback (glDebugOutput, 0);
 	glDebugMessageControl (GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
@@ -178,33 +134,48 @@ int main (int argc, char *argv[])
 	glUseProgram (program);
 	
 	
-	struct drawrange dr;
-	dr.n = 10;
-	drawrange_init (&dr);
-	vu32_setl (dr.capacity, dr.n, 6*10*10, 6*7, 0, 0, 0, 0, 0, 0, 0, 0);
+	struct xxgl_drawrange dr;
+	dr.n = DI_N;
+	xxgl_drawrange_calloc (&dr);
+	dr.capacity  [DI_BOX1] = 6*10*10;
+	dr.length    [DI_BOX1] = 6*10*10;
+	dr.primitive [DI_BOX1] = GL_TRIANGLES;
+	dr.capacity  [DI_TEXT] = 6*7;
+	dr.length    [DI_TEXT] = 6*7;
+	dr.primitive [DI_TEXT] = GL_TRIANGLES;
+	dr.capacity  [DI_BOX2] = 6*10;
+	dr.length    [DI_BOX2] = 6*10;
+	dr.primitive [DI_BOX2] = GL_TRIANGLES;
+	
+	
 	vu32_ladder (dr.n, dr.offset, dr.capacity);
 	
+	
 	GLuint vao [1];
-	GLuint vbo [3];
 	GLuint tex [2];
 	glGenVertexArrays (1, vao);
-	glGenBuffers (3, vbo);
 	glGenTextures (2, tex);
 	glBindVertexArray (vao [0]);
-	gpu_setup_vertex1 (vbo, drawrange_cap (&dr));
-	uint32_t ca [128];
-	float cw [128];
-	float ch [128];
-	float cx [128];
-	float cy [128];
-	setup_font (tex [0], face, ca, cx, cy, cw, ch);
+	gpu_setup_vertex1 (dr.vbo, xxgl_drawrange_cap (&dr));
 	
-	update_pos_grid   (vbo [0], dr.offset [0], dr.length + 0, dr.capacity [0], 10, 10);
-	update_col_random (vbo [1], dr.offset [0], dr.length + 0, dr.capacity [0], 10 * 10);
-	update_tex_alpha  (vbo [2], dr.offset [0], dr.length + 0, dr.capacity [0], 10 * 10);
-
-
-
+	struct gtext_fdim fdim;
+	fdim.n = 128;
+	gtext_fdim_calloc (&fdim);
+	
+	gtext_setup (tex [0], face, &fdim);
+	vf32_mus (128, fdim.x, fdim.x, 0.0011f);
+	vf32_mus (128, fdim.y, fdim.y, 0.0011f);
+	vf32_mus (128, fdim.w, fdim.w, 0.0011f);
+	vf32_mus (128, fdim.h, fdim.h, 0.0011f);
+	vf32_mus (128, fdim.a, fdim.a, 0.0011f);
+	
+	xxgl_dr_v4f32_repeat4           (&dr, VBO_COL, DI_TEXT, 1.0f, 0.4f, 0.4f, 1.0f);
+	xxgl_dr_v4f32_randomcolor       (&dr, VBO_COL, DI_BOX1, 10 * 10);
+	xxgl_dr_v4f32_grid              (&dr, VBO_POS, DI_BOX1, 10, 10);
+	xxgl_dr_v4f32_squaretex_countup (&dr, VBO_TEX, DI_BOX1, 10 * 10, (uint32_t)'!');
+	
+	
+	
 	while (1)
 	{
 		if (flags & APP_QUIT) {break;}
@@ -226,10 +197,13 @@ int main (int argc, char *argv[])
 					SDL_PushEvent (&event);
 					break;
 					case SDLK_c:
-					update_tex_random  (vbo [2], dr.offset [0], dr.length + 0, dr.capacity [0], 10 * 10);
+					//update_tex_random (dr.vbo [2], dr.offset [0], dr.length + 0, dr.capacity [0], 10 * 10);
 					break;
 					case SDLK_v:
-					update_col_random (vbo [1], dr.offset [0], dr.length + 0, dr.capacity [0], 10 * 10);
+					//update_col_random (dr.vbo [1], dr.offset [0], dr.length + 0, dr.capacity [0], 10 * 10);
+					break;
+					case SDLK_z:
+					vf32_add1 (128, fdim.y, fdim.y, -0.01f);
 					break;
 				}
 				break;
@@ -241,15 +215,9 @@ int main (int argc, char *argv[])
 		glClearColor (0.2f, 0.3f, 0.3f, 1.0f);
 		glClear (GL_COLOR_BUFFER_BIT);
 		
-		RenderText (vbo, "abcdefg", 0.0f, 0.0f, ca, cx, cy, cw, ch, 0.005f, dr.offset [1], dr.capacity [1]);
-		
-		//RenderBox (vbo, 0.0f, 0.0f, 0.2f, 0.2f, dr.offset [1], dr.capacity [1]);
-		
-		//app_draw (dr.n, dr.offset, dr.capacity);
-		//glDrawArrays (GL_TRIANGLES, 0, 5*6);
-		//glDrawArrays (GL_POINTS, 0, 12);
-		//glDrawArrays (GL_LINES, 0, 6*100);
-
+		gtext_draw ("Goggle", &fdim, &dr, DI_TEXT, 0.0f, 0.0f, 1.0, 2.0f);
+		xxgl_drawrange_draw (&dr, DI_BOX1);
+		xxgl_drawrange_draw (&dr, DI_TEXT);
 		
 		SDL_GL_SwapWindow (window);	
 		SDL_Delay (1);
@@ -260,14 +228,3 @@ int main (int argc, char *argv[])
 	
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-

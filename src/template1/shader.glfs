@@ -1,25 +1,14 @@
 #version 330 core
 
-in vec3 TexUVL;
-in vec4 ColRGBA;
+in vec3 tpos;
+in vec4 vcol;
 
-out vec4 OutColor;
+out vec4 fcol;
 
 uniform sampler2DArray tex;
 
 void main()
 {
-	vec4 sampled;
-	
-	{
-		vec3 p = TexUVL;
-		sampled = texture (tex, p);
-	}
-	
-	{
-		vec4 c = vec4 (1.0, 1.0, 1.0, sampled.r);	
-		float a = 0.5;
-		OutColor = ((1.0 - a) * ColRGBA) + (a * c);
-		//OutColor = vec4 (1.0, 1.0, 1.0, 1.0);
-	}
+	vec4 tcol = texture (tex, tpos);
+	fcol = mix (tcol, vcol, tcol.a);
 }  
