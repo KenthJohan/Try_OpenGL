@@ -102,45 +102,6 @@ SDL_Window * app_create_window ()
 }
 
 
-void gpu_setup_vertex1 (GLuint vbo [3], uint32_t vn)
-{
-	GLenum const target [] = {GL_ARRAY_BUFFER, GL_ARRAY_BUFFER, GL_ARRAY_BUFFER};
-	uint32_t const index [] = {0, 1, 2};
-	GLenum const type [] = {GL_FLOAT, GL_FLOAT, GL_FLOAT};
-	GLboolean const normalized [] = {GL_FALSE, GL_FALSE, GL_FALSE};
-	uint32_t const offset [] = {0, 0, 0};
-	uint32_t const dim [] = {4, 4, 4};
-	uint32_t const stride [] = {sizeof (float) * dim [0], sizeof (float) * dim [1], sizeof (float) * dim [2]};
-	GLbitfield const flags [] = {GL_MAP_WRITE_BIT, GL_MAP_WRITE_BIT, GL_MAP_WRITE_BIT};
-	
-	xxgl_layout 
-	(
-		3,
-		index,
-		dim,
-		type,
-		normalized,
-		stride,
-		offset,
-		target,
-		vbo
-	);
-	
-	TRACE_F ("vn: %i", vn);
-	xxgl_allocate 
-	(
-		3,
-		target,
-		vbo,
-		stride,
-		NULL,
-		flags,
-		vn
-	);
-}
-
-
-
 void setup_test_texture ()
 {
 	GLuint texture;

@@ -19,54 +19,9 @@ https://github.com/KerryL/LibPlot2D/blob/f0b7deca6c9af24c8daab13cc17dd5ab30d1ac0
 #include <csc/gen.h>
 #include <csc/gtext.h>
 #include <csc/xxgl.h>
+#include <csc/xxgl_dr.h>
 
 #include "app.h"
-
-
-uint32_t map [] = 
-{
-	0, 0, 0, 0,
-	0, 0, 0, 0,
-	0, 0, 0, 0,
-	0, 0, 0, 0
-};
- 
-
-
-float * glMapBufferRange_4fv (uint32_t offset, uint32_t length)
-{
-	GLenum const target = GL_ARRAY_BUFFER;
-	GLbitfield const access = GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT;
-	uint32_t const vdim = 4;
-	uint32_t const vsize = sizeof (float) * vdim;
-	GLintptr const offset8 = offset * vsize;
-	GLsizeiptr const length8 = length * vsize;
-	float * buffer = glMapBufferRange (target, offset8, length8, access);
-	ASSERT (buffer);
-	return buffer;
-}
-
-
-
-void RenderBox 
-(
-	GLuint vbo [3],
-	float x, 
-	float y, 
-	float w, 
-	float h, 
-	uint32_t offset, 
-	uint32_t length
-)
-{
-	float * v;
-	glBindBuffer (GL_ARRAY_BUFFER, vbo [0]);
-	v = glMapBufferRange_4fv (offset, length);
-	gen_square_pos (v, x, y, w, h);
-	glUnmapBuffer (GL_ARRAY_BUFFER);
-	glDrawArrays (GL_TRIANGLES, offset, length);
-}
-
 
 
 
@@ -77,13 +32,6 @@ struct gui_textbox
 	float pos [4];
 	char * text;
 };
-
-
-
-
-
-
-
 
 
 
@@ -134,16 +82,16 @@ int main (int argc, char *argv[])
 	glUseProgram (program);
 	
 	
-	struct xxgl_drawrange dr;
+	struct xxgl_dr dr;
 	dr.n = DI_N;
-	xxgl_drawrange_calloc (&dr);
-	dr.capacity  [DI_BOX1] = 6*10*10;
+	xxgl_dr_calloc (&dr);
+	dr.capacity  [DI_BOX1] = 6*10*10; //10*10 squares
 	dr.length    [DI_BOX1] = 6*10*10;
 	dr.primitive [DI_BOX1] = GL_TRIANGLES;
-	dr.capacity  [DI_TEXT] = 6*7;
-	dr.length    [DI_TEXT] = 6*7;
+	dr.capacity  [DI_TEXT] = 6*10; //10 squares
+	dr.length    [DI_TEXT] = 6*10;
 	dr.primitive [DI_TEXT] = GL_TRIANGLES;
-	dr.capacity  [DI_BOX2] = 6*10;
+	dr.capacity  [DI_BOX2] = 6*10; //10 squares
 	dr.length    [DI_BOX2] = 6*10;
 	dr.primitive [DI_BOX2] = GL_TRIANGLES;
 	
@@ -156,18 +104,24 @@ int main (int argc, char *argv[])
 	glGenVertexArrays (1, vao);
 	glGenTextures (2, tex);
 	glBindVertexArray (vao [0]);
-	gpu_setup_vertex1 (dr.vbo, xxgl_drawrange_cap (&dr));
+	
+	xxgl_layout11 (3, 4, GL_FLOAT, GL_FALSE, GL_ARRAY_BUFFER, dr.vbo);
+	xxgl_dr_allocate (&dr);
+	
+	//gpu_setup_vertex1 (dr.vbo, xxgl_drawrange_cap (&dr));
 	
 	struct gtext_fdim fdim;
 	fdim.n = 128;
 	gtext_fdim_calloc (&fdim);
-	
 	gtext_setup (tex [0], face, &fdim);
+	
+	
 	vf32_mus (128, fdim.x, fdim.x, 0.0011f);
 	vf32_mus (128, fdim.y, fdim.y, 0.0011f);
 	vf32_mus (128, fdim.w, fdim.w, 0.0011f);
 	vf32_mus (128, fdim.h, fdim.h, 0.0011f);
 	vf32_mus (128, fdim.a, fdim.a, 0.0011f);
+	
 	
 	xxgl_dr_v4f32_repeat4           (&dr, VBO_COL, DI_TEXT, 1.0f, 0.4f, 0.4f, 1.0f);
 	xxgl_dr_v4f32_randomcolor       (&dr, VBO_COL, DI_BOX1, 10 * 10);
@@ -215,9 +169,10 @@ int main (int argc, char *argv[])
 		glClearColor (0.2f, 0.3f, 0.3f, 1.0f);
 		glClear (GL_COLOR_BUFFER_BIT);
 		
-		gtext_draw ("Goggle", &fdim, &dr, DI_TEXT, 0.0f, 0.0f, 1.0, 2.0f);
-		xxgl_drawrange_draw (&dr, DI_BOX1);
-		xxgl_drawrange_draw (&dr, DI_TEXT);
+		//gtext_draw ("Goggle", &fdim, &dr, DI_TEXT, 0.0f, 0.0f, 0.001f, 0.001f);
+		gtext_draw ("Goggle", &fdim, &dr, DI_TEXT, 0.0f, 0.0f, 1.0f, 1.0f);
+		xxgl_dr_draw (&dr, DI_BOX1);
+		xxgl_dr_draw (&dr, DI_TEXT);
 		
 		SDL_GL_SwapWindow (window);	
 		SDL_Delay (1);
