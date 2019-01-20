@@ -27,12 +27,23 @@ https://github.com/KerryL/LibPlot2D/blob/f0b7deca6c9af24c8daab13cc17dd5ab30d1ac0
 
 struct gui_textbox
 {
-	uint32_t di;
-	float color [4];
+	float col [4];
 	float pos [4];
 	char * text;
 };
 
+
+
+void gui_textbox_update 
+(
+	struct gui_textbox * g, 
+	struct xxgl_dr * dr,
+	uint32_t di
+)
+{
+	xxgl_dr_v4f32_repeat4 (dr, VBO_COL, di, g->col [0], g->col [1], g->col [2], g->col [3]);
+	
+}
 
 
 
@@ -56,7 +67,7 @@ int main (int argc, char *argv[])
 		int r = FT_New_Face(ft, "fonts/arial.ttf", 0, &face);
 		ASSERT_F (r == 0, "ERROR::FREETYPE: Failed to load font %i", r);
 	}
-	FT_Set_Pixel_Sizes (face, 0, 48);
+	FT_Set_Pixel_Sizes (face, 0, 40);
 	
 	window = app_create_window ();
 	
@@ -85,8 +96,8 @@ int main (int argc, char *argv[])
 	struct xxgl_dr dr;
 	dr.n = DI_N;
 	xxgl_dr_calloc (&dr);
-	dr.capacity  [DI_BOX1] = 6*10*10; //10*10 squares
-	dr.length    [DI_BOX1] = 6*10*10;
+	dr.capacity  [DI_BOX1] = 6*40*40; //40*40 squares
+	dr.length    [DI_BOX1] = 6*40*40;
 	dr.primitive [DI_BOX1] = GL_TRIANGLES;
 	dr.capacity  [DI_TEXT] = 6*10; //10 squares
 	dr.length    [DI_TEXT] = 6*10;
@@ -111,24 +122,18 @@ int main (int argc, char *argv[])
 	//gpu_setup_vertex1 (dr.vbo, xxgl_drawrange_cap (&dr));
 	
 	struct gtext_fdim fdim;
-	fdim.n = 128;
+	fdim.n = 40*40;
 	gtext_fdim_calloc (&fdim);
 	gtext_setup (tex [0], face, &fdim);
 	
-	
-	vf32_mus (128, fdim.x, fdim.x, 0.0011f);
-	vf32_mus (128, fdim.y, fdim.y, 0.0011f);
-	vf32_mus (128, fdim.w, fdim.w, 0.0011f);
-	vf32_mus (128, fdim.h, fdim.h, 0.0011f);
-	vf32_mus (128, fdim.a, fdim.a, 0.0011f);
-	
+	GLint max_layers;
+	glGetIntegerv (GL_MAX_ARRAY_TEXTURE_LAYERS, &max_layers);
+	TRACE_F ("GL_MAX_ARRAY_TEXTURE_LAYERS %i", max_layers);
 	
 	xxgl_dr_v4f32_repeat4           (&dr, VBO_COL, DI_TEXT, 1.0f, 0.4f, 0.4f, 1.0f);
-	xxgl_dr_v4f32_randomcolor       (&dr, VBO_COL, DI_BOX1, 10 * 10);
-	xxgl_dr_v4f32_grid              (&dr, VBO_POS, DI_BOX1, 10, 10);
-	xxgl_dr_v4f32_squaretex_countup (&dr, VBO_TEX, DI_BOX1, 10 * 10, (uint32_t)'!');
-	
-	
+	xxgl_dr_v4f32_randomcolor       (&dr, VBO_COL, DI_BOX1, 40 * 40);
+	xxgl_dr_v4f32_grid              (&dr, VBO_POS, DI_BOX1, 40, 40);
+	xxgl_dr_v4f32_squaretex_countup (&dr, VBO_TEX, DI_BOX1, 40 * 40, (uint32_t)'!');
 	
 	while (1)
 	{
@@ -157,7 +162,7 @@ int main (int argc, char *argv[])
 					//update_col_random (dr.vbo [1], dr.offset [0], dr.length + 0, dr.capacity [0], 10 * 10);
 					break;
 					case SDLK_z:
-					vf32_add1 (128, fdim.y, fdim.y, -0.01f);
+					vf32_mus (128, fdim.a, fdim.a, 0.1f);
 					break;
 				}
 				break;
@@ -169,8 +174,7 @@ int main (int argc, char *argv[])
 		glClearColor (0.2f, 0.3f, 0.3f, 1.0f);
 		glClear (GL_COLOR_BUFFER_BIT);
 		
-		//gtext_draw ("Goggle", &fdim, &dr, DI_TEXT, 0.0f, 0.0f, 0.001f, 0.001f);
-		gtext_draw ("Goggle", &fdim, &dr, DI_TEXT, 0.0f, 0.0f, 1.0f, 1.0f);
+		gtext_draw ("Goggle", &fdim, &dr, DI_TEXT, 0.0f, 0.0f, 0.001f, 0.001f, 0.001f);
 		xxgl_dr_draw (&dr, DI_BOX1);
 		xxgl_dr_draw (&dr, DI_TEXT);
 		
